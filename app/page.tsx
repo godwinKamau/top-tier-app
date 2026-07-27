@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Phone, Sparkles, Award } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { ApplyForm } from "@/components/ApplyForm";
+import { ApplyForm } from "@/components/form/ApplyForm";
 import { FadeIn } from "@/components/FadeIn";
 import { PillarIcon } from "@/components/PillarIcon";
 import { FormattedText } from "@/components/FormattedText";

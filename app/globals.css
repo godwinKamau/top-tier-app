@@ -5,6 +5,10 @@
   --foreground: #171717;
 }
 
+html {
+  @apply font-sans scroll-smooth;
+}
+
 @theme inline {
   --color-navy: #0f1f3d;
   --color-navy-light: #1c3260;

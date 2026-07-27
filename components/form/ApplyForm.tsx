@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { useActionState } from "react";
+import { CheckCircle2, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,25 +11,29 @@ import { cn } from "@/lib/utils";
 
 type ApplyFormProps = {
   className?: string;
-  /** Visual variant so designs can theme the form shell */
   variant?: "default" | "dark" | "warm" | "minimal";
 };
 
-export function ApplyForm({
-  className,
-  variant = "default",
-}: ApplyFormProps) {
-  const [status, setStatus] = useState<"idle" | "submitting" | "success">(
-    "idle"
-  );
+export function ApplyForm({ className, variant = "default" }: ApplyFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    async (_prev: unknown, formData: FormData) => {
+      const json = Object.fromEntries(formData.entries())
+      const email = String(formData.get('email'));
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setStatus("submitting");
-    // TODO: Wire to a real backend / email / CRM — currently UI-only fake submit
-    await new Promise((r) => setTimeout(r, 900));
-    setStatus("success");
-  }
+      const res = await fetch('/api/sendEmail', {
+        method:'POST',
+        headers: { 'Content-Type': 'JSON'},
+        body:JSON.stringify(json)
+      })
+
+      if (res.status === 200) {
+        return { status: "success", email }
+      } else {
+        return { status: "failure" }
+      };
+    },
+    null
+  );
 
   const shell =
     variant === "dark"
@@ -45,24 +49,30 @@ export function ApplyForm({
       ? "border-gold/30 bg-navy/40 text-ivory placeholder:text-ivory/50"
       : "";
 
-  if (status === "success") {
+  if ( state?.status === "success") {
     return (
       <div
-        className={cn(
-          "rounded-xl border p-8 text-center",
-          shell,
-          className
-        )}
+        className={cn("rounded-xl border p-8 text-center", shell, className)}
         role="status"
         aria-live="polite"
       >
-        <CheckCircle2
-          className="mx-auto mb-4 size-12 text-laurel"
-          aria-hidden
-        />
+        <CheckCircle2 className="mx-auto mb-4 size-12 text-laurel" aria-hidden />
         <p className="text-lg font-semibold">
-          {content.apply.successMessage}
+          Thank you! Sending an email response to 
+          <span className="text-lg font-semibold text-gold"> { state.email }</span>.
+          We'll be in touch soon.
         </p>
+      </div>
+    );
+  } else if (state?.status === "failure") {
+    return(
+      <div
+        className={cn("rounded-xl border p-8 text-center", shell, className)}
+        role="status"
+        aria-live="polite"
+      >
+        <CircleHelp className="mx-auto mb-4 size-12 text-laurel" aria-hidden />
+        <p className="text-lg font-semibold">{content.apply.failMessage}</p>
       </div>
     );
   }
@@ -71,75 +81,36 @@ export function ApplyForm({
 
   return (
     <form
-      onSubmit={handleSubmit}
+      action={formAction}
       className={cn("rounded-xl border p-6 sm:p-8", shell, className)}
-      noValidate
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={f.parentName} htmlFor="parentName">
-          <Input
-            id="parentName"
-            name="parentName"
-            required
-            autoComplete="name"
-            className={fieldClass}
-          />
+          <Input id="parentName" name="parentName" required autoComplete="name" className={fieldClass} />
         </Field>
         <Field label={f.email} htmlFor="email">
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={fieldClass}
-          />
+          <Input id="email" name="email" type="email" required autoComplete="email" className={fieldClass} />
         </Field>
         <Field label={f.phone} htmlFor="phone">
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            required
-            autoComplete="tel"
-            className={fieldClass}
-          />
+          <Input id="phone" name="phone" type="tel" required autoComplete="tel" className={fieldClass} />
         </Field>
         <Field label={f.studentName} htmlFor="studentName">
-          <Input
-            id="studentName"
-            name="studentName"
-            required
-            className={fieldClass}
-          />
+          <Input id="studentName" name="studentName" required className={fieldClass} />
         </Field>
         <Field label={f.grade} htmlFor="grade" className="sm:col-span-2">
-          <Input
-            id="grade"
-            name="grade"
-            placeholder="e.g. 7th, 8th, 10th"
-            required
-            className={fieldClass}
-          />
+          <Input id="grade" name="grade" placeholder="e.g. 7th, 8th, 10th" required className={fieldClass} />
         </Field>
         <Field label={f.message} htmlFor="message" className="sm:col-span-2">
-          <Textarea
-            id="message"
-            name="message"
-            rows={3}
-            className={fieldClass}
-          />
+          <Textarea id="message" name="message" rows={3} className={fieldClass} />
         </Field>
       </div>
       <Button
         type="submit"
         size="lg"
-        disabled={status === "submitting"}
+        disabled={isPending}
         className="mt-6 h-11 w-full bg-gold text-navy hover:bg-gold-light focus-visible:ring-gold sm:w-auto sm:min-w-[200px]"
       >
-        {status === "submitting"
-          ? "Submitting…"
-          : content.apply.submitLabel}
+        {isPending ? "Submitting…" : content.apply.submitLabel}
       </Button>
     </form>
   );

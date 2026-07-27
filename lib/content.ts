@@ -127,7 +127,7 @@ export const content = {
       "It's not enough to be smart anymore. Students need systems.",
   },
   apply: {
-    title: "Apply Now",
+    title: "Join Our Mailing List",
     subtitle:
       "Tell us about your student. We'll follow up to discuss fit and next steps.",
     fields: {
@@ -141,7 +141,9 @@ export const content = {
     submitLabel: "Submit Application",
     successMessage:
       "Thank you — your application has been received. We'll be in touch soon.",
-    // TODO: Wire to a real backend / email / CRM when ready (currently UI-only)
+    failMessage:
+      "Something went wrong. Please try again shortly."
+    
   },
   footer: {
     ctaLabel: "Apply Now",
