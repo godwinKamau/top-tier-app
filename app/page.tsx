@@ -1,8 +1,12 @@
 import Image from "next/image";
+import heroImg from "@/public/images/hero.png";
+import studentImg from "@/public/images/student.png"
+import paraLLaxImg from "@/public/images/parallax.png";
 import { Phone, Sparkles, Award } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ApplyForm } from "@/components/form/ApplyForm";
 import { FadeIn } from "@/components/FadeIn";
+import { TopTierSolutions } from "@/components/TopTierSolutions";
 import { PillarIcon } from "@/components/PillarIcon";
 import { FormattedText } from "@/components/FormattedText";
 import { content } from "@/lib/content";
@@ -48,11 +52,21 @@ export default function Home() {
       </header>
 
       <main id="top">
+        <div id="top-banner" className="width-full bg-gold-light text-navy font-bold flex items-center justify-center min-h-[5vh]">“High-touch academic coaching for capable students who need better systems.”</div>
         {/* Cinematic hero */}
         <section className="relative min-h-[85vh] overflow-hidden">
-          {/* TODO: swap media — large cinematic Chicago / academic hero */}
           <div
             className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#1c3260_0%,#070d1a_55%),linear-gradient(180deg,transparent_60%,#070d1a_100%)]"
+            aria-hidden
+          />
+          <Image
+            src={heroImg}
+            alt=""
+            fill
+            sizes="100vw"
+            placeholder="blur"
+            style={{ objectFit: "cover" }}
+            className="opacity-45"
             aria-hidden
           />
           <div
@@ -80,7 +94,7 @@ export default function Home() {
                   {content.hero.hookLine2}
                 </span>
               </h1>
-              <p className="mt-8 max-w-xl text-lg leading-relaxed text-ivory/75">
+              <p className="mt-8 max-w-4xl text-lg leading-relaxed text-ivory/75">
                 {content.hero.reassurance}
               </p>
               <a
@@ -94,8 +108,7 @@ export default function Home() {
               className="mt-16 max-w-md text-sm tracking-wide text-ivory/40"
               aria-label={content.hero.mediaAlt}
             >
-              Powered by {content.brand.system} — elite high-touch coaching for
-              families who expect excellence.
+              It’s not enough to be smart anymore. Students need systems.
             </p>
           </div>
         </section>
@@ -106,37 +119,185 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Pillars */}
-        <section id="pillars" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        {/* Pain-Points */}
+        <section id="pain-points" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
           <FadeIn>
+          <div className="grid gap-12 lg:grid-cols-2">
+            <div>
+              <Image
+                src={studentImg}
+                alt=""
+                sizes="50vw"
+                placeholder="blur"
+                style={{ 
+                  objectFit: "cover"
+                }}
+                className="opacity-45"
+                aria-hidden
+              />
+            </div>
+            <div>
+              <h2 
+                className="text-3xl font-bold sm:text-4xl pb-5"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+              >
+                Does this student sound familiar?
+              </h2>
+              <ul className="space-y-4">
+                <li className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75">
+                  Smart enough to do the work but doesn’t always turn it in
+                </li>
+                <li className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75">
+                  Waits until the night before to study
+                </li>
+                <li className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75">
+                  Has a planner but rarely uses it  
+                </li>
+                <li className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75">
+                  Waits until the night before to study
+                </li>
+                <li className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75">
+                  Can earn As but regularly settles for Bs or Cs because of organization
+                </li>
+                <li className="border-l border-gold/50 pl-5 text-sm font-bold leading-relaxed text-ivory/75">
+                  Has ambitious high-school or college goals but inconsistent habits
+                </li>
+              </ul>
+
+            </div>
+          </div>
+          </FadeIn>
+        </section>
+
+        {/* Top-Tier Solutions */}
+        <section
+          id="top-tier-solutions"
+          className="border-y border-gold/15 bg-navy/40"
+          style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+        >
+          <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+            <FadeIn>
+              <h2 className="text-3xl font-bold text-center sm:text-4xl">
+                {content.topTierSolutions.title}
+              </h2>
+              <div className="mt-4 h-px w-32 bg-gradient-to-r from-gold to-transparent" />
+            </FadeIn>
+            <FadeIn delay={0.08}>
+              <TopTierSolutions items={content.topTierSolutions.items} />
+            </FadeIn>
+          </div>
+        </section>
+
+        
+        {/* Soar System */}
+        <section
+          id="soar-system"
+          className="relative overflow-hidden border-y border-gold/25 bg-[#050a14] py-28"
+        >
+          {/* blueprint grid, faded out toward the edges */}
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, #c9a227 1px, transparent 1px), linear-gradient(to bottom, #c9a227 1px, transparent 1px)",
+              backgroundSize: "64px 64px",
+              maskImage:
+                "radial-gradient(ellipse 75% 60% at 50% 40%, #000 35%, transparent 100%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 75% 60% at 50% 40%, #000 35%, transparent 100%)",
+            }}
+            aria-hidden
+          />
+          {/* gold glow */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "radial-gradient(ellipse 55% 45% at 30% 30%, rgba(201,162,39,0.13) 0%, transparent 70%)",
+            }}
+            aria-hidden
+          />
+
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+            <FadeIn>
+              <h2
+                className="text-3xl font-bold text-balance sm:text-5xl"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+              >
+                {content.soarSystem.title}
+              </h2>
+              <div className="mt-4 h-px w-32 bg-gradient-to-r from-gold to-transparent" />
+            </FadeIn>
+
+            <ul className="mt-14 grid gap-6 sm:grid-cols-2">
+              {content.soarSystem.items.map((item, i) => {
+                // Titles arrive as "S - Small Wins" / "O — Organization".
+                // Split so the letter can carry the S.O.A.R. identity and the
+                // separator renders consistently regardless of the source dash.
+                const parsed = item.title.match(/^([A-Za-z])\s*[-—–]\s*(.+)$/);
+                const letter = parsed ? parsed[1].toUpperCase() : null;
+                const label = parsed ? parsed[2] : item.title;
+
+                return (
+                  <FadeIn key={item.title} delay={i * 0.1} as="li" className="h-full">
+                    <article className="group relative flex h-full flex-col overflow-hidden border border-gold/20 bg-navy/50 p-6 transition-[border-color,background-color,box-shadow] duration-300 ease-out hover:border-gold/60 hover:bg-navy-light/40 hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7),0_0_44px_-16px_rgba(201,162,39,0.5)] sm:p-8">
+                      {letter && (
+                        <span
+                          className="pointer-events-none absolute -top-8 right-1 select-none text-[8rem] font-bold leading-none text-gold/10 transition-colors duration-300 group-hover:text-gold/20"
+                          style={{
+                            fontFamily: "var(--font-playfair), Georgia, serif",
+                          }}
+                          aria-hidden
+                        >
+                          {letter}
+                        </span>
+                      )}
+                      <span className="relative flex size-12 shrink-0 items-center justify-center border border-gold/40 text-gold transition-[background-color,border-color] duration-300 group-hover:border-gold/70 group-hover:bg-gold/10">
+                        <PillarIcon name={item.icon} />
+                      </span>
+                      <h3
+                        className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                        style={{
+                          fontFamily: "var(--font-playfair), Georgia, serif",
+                        }}
+                      >
+                        {letter && (
+                          <>
+                            <span className="text-gold">{letter}</span>
+                            <span className="text-gold/40"> — </span>
+                          </>
+                        )}
+                        {label}
+                      </h3>
+                      <FormattedText className="relative mt-3 text-sm leading-relaxed text-pretty text-ivory/65">
+                        {item.description}
+                      </FormattedText>
+                    </article>
+                  </FadeIn>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+        
+        {/* Parallax */}
+        <div
+          className="h-100 w-full overflow-y-scroll bg-contain bg-fixed bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${paraLLaxImg.src})` }}>
+        </div>
+
+        {/* How it works */}
+        <section id="how-it-works" className="mx-auto max-w-6xl border-y border-gold/25 px-4 py-24 sm:px-6">
+          <FadeIn>
+
             <h2
-              className="text-3xl font-bold sm:text-5xl"
+              className="text-3xl font-bold sm:text-4xl"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
             >
-              {content.pillars.title}
+              How It Works
             </h2>
-            <div className="mt-4 h-px w-32 bg-gradient-to-r from-gold to-transparent" />
+
           </FadeIn>
-          <ul className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {content.pillars.items.map((item, i) => (
-              <FadeIn key={item.title} delay={i * 0.06} as="li">
-                <article className="group h-full border border-gold/20 bg-navy/50 p-6 transition hover:border-gold/50 hover:bg-navy-light/40">
-                  <span className="flex size-12 items-center justify-center border border-gold/40 text-gold transition group-hover:bg-gold/10">
-                    <PillarIcon name={item.icon} />
-                  </span>
-                  <h3
-                    className="mt-5 text-xl font-semibold"
-                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                  >
-                    {item.title}
-                  </h3>
-                  <FormattedText className="mt-3 text-sm leading-relaxed text-ivory/65">
-                    {item.description}
-                  </FormattedText>
-                </article>
-              </FadeIn>
-            ))}
-          </ul>
         </section>
 
         {/* Ideal student */}

@@ -18,57 +18,49 @@ export const content = {
   },
   nav: {
     links: [
-      { label: "Our Focus", href: "#pillars" },
+      { label: "Our Focus", href: "#soar-system" },
       { label: "Ideal Student", href: "#ideal-student" },
       { label: "Framework", href: "#framework" },
       { label: "Guarantee", href: "#guarantee" },
       { label: "Apply", href: "#apply" },
     ],
-    cta: "Apply Now",
+    cta: "Apply For Coaching",
   },
   hero: {
     hookLine1: "It's Sunday Night…",
     hookLine2: "DO YOU KNOW YOUR STUDENT'S GRADES?",
     reassurance:
       "Relax. We've managed the deadlines so your only job is to be the parent.",
-    cta: "Apply Today",
-    // TODO: swap media — replace hero background with final Chicago skyline / academic imagery
+    cta: "Apply For Coaching",
     mediaAlt:
       "Placeholder for Chicago skyline and academic success imagery",
   },
-  pillars: {
-    title: "Our Focus — The 5 Pillars",
-    subtitle: `Powered by ${"The S.O.A.R. System™"}`,
+  soarSystem: {
+    title: "Powered by the S.O.A.R. System",
     items: [
       {
         icon: "graduationCap" as const,
-        title: "Academic Excellence",
+        title: "S - Small Wins",
         description:
-          "Rigorous **coursework support** that turns *A-potential* into *A-performance* across every class.",
+          "Consistent progress starts with attainable weekly goals. Each small success builds the confidence and momentum students need to take on bigger challenges.",
       },
       {
         icon: "brain" as const,
-        title: "Executive Functioning",
+        title: "O — Organization",
         description:
-          "**Systems** for planning, prioritization, and follow-through — skills that *compound for life*.",
+          "Every part of academic life has a system: calendars, gradebooks, deadlines, materials, and study routines, all structured to keep students prepared and in control.",
       },
       {
         icon: "clipboardCheck" as const,
-        title: "Accountability Systems",
+        title: "A — Accountability",
         description:
-          "**Weekly study logs**, deadline monitoring, and structured check-ins so *nothing slips*.",
+          "We monitor progress and follow up consistently, so assignments and commitments are completed rather than overlooked.",
       },
       {
         icon: "school" as const,
-        title: "Admission Prep (CPS HSAT)",
+        title: "R — Rigor",
         description:
-          "Targeted prep for **CPS Selective Enrollment / HSAT, ISEE, and ACT** with strategy that *sticks*.",
-      },
-      {
-        icon: "users" as const,
-        title: "Family Partnerships",
-        description:
-          "**High-touch coaching** for busy parents — clear updates, *calm Sundays*, shared ownership.",
+          "We prepare students to meet increasingly demanding academic expectations, developing the skills and habits that higher-level coursework requires.",
       },
     ],
   },
@@ -82,6 +74,37 @@ export const content = {
       "Struggling with executive function — bright students who lose track of deadlines",
       "Attending charter or underserved schools — families seeking elite-level support",
       "Ready for partnership — students and parents willing to commit to the system",
+    ],
+  },
+  topTierSolutions: {
+    title: "Top Tier is the System Behind Your Student's Success.",
+    // TODO: placeholder copy — replace with real TTSS questions
+    // (pricing, session cadence, HSAT timelines, parent reporting)
+    items: [
+      {
+        q: "Know exactly where things stand",
+        a: 'We track grades and missing assignments so nothing slips through the cracks and there are no surprises at progress reports or report cards.',
+      },
+      {
+        q: "Stay ahead of every deadline",
+        a: 'We keep a running view of due dates, tests, and upcoming assessments, so your student is preparing early instead of scrambling at the last minute.',
+      },
+      {
+        q: "Start every week with a plan",
+        a: 'Together, we build a clear weekly academic plan that turns a long to-do list into manageable, realistic steps.',
+      },
+      {
+        q: "Focus on what matters most",
+        a: 'We teach students to prioritize assignments and responsibilities, so the most important work gets done first and nothing critical is left for the night before.',
+      },
+      {
+        q: "Build systems that actually work",
+        a: 'We help students set up organization systems for their materials, notes, and digital files that they can maintain on their own.',
+      },
+      {
+        q: "Get support when they're stuck",
+        a: "Tutoring and study support are built right in, so when a student needs help understanding the material or preparing for an exam, it's already part of the plan.",
+      },
     ],
   },
   framework: {
