@@ -1,11 +1,17 @@
 import Image from "next/image";
 import heroImg from "@/public/images/hero.png";
 import studentImg from "@/public/images/student.png"
-import paraLLaxImg from "@/public/images/parallax.png";
-import { Phone, Sparkles, Award } from "lucide-react";
+import paraLLaxImg1 from "@/public/images/parallax1.png"
+import paraLLaxImg2 from "@/public/images/parallax.png";
+import peer_tutor from "@/public/images/peer_tutor.png"
+import parent_portal1 from "@/public/images/parent-portal1.png"
+import penImg from "@/public/images/pen.png";
+import calendar from "@/public/images/calendar.png"
+import { Sparkles, Award, User } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ApplyForm } from "@/components/form/ApplyForm";
 import { FadeIn } from "@/components/FadeIn";
+import { Carousel } from "@/components/Carousel";
 import { TopTierSolutions } from "@/components/TopTierSolutions";
 import { PillarIcon } from "@/components/PillarIcon";
 import { FormattedText } from "@/components/FormattedText";
@@ -22,7 +28,7 @@ export default function Home() {
           <a href="#top" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
             <Logo variant="light" size="sm" />
           </a>
-          <nav className="hidden items-center gap-6 text-sm text-ivory/70 lg:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-1 text-sm text-ivory/70 lg:flex" aria-label="Primary">
             {content.nav.links.map((l) => (
               <a
                 key={l.href}
@@ -33,21 +39,12 @@ export default function Home() {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
-            <a
-              href={`tel:${content.brand.phone}`}
-              className="hidden items-center gap-1.5 text-sm font-semibold text-gold sm:inline-flex"
-            >
-              <Phone className="size-3.5" aria-hidden />
-              {content.brand.phone}
-            </a>
-            <a
-              href="#apply"
-              className="inline-flex h-10 items-center rounded-sm border border-gold bg-gradient-to-r from-gold to-gold-light px-5 text-sm font-bold text-navy shadow-[0_0_24px_rgba(201,162,39,0.25)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-light"
-            >
-              {content.nav.cta}
-            </a>
-          </div>
+          <a
+            href="#apply"
+            className="inline-flex h-10 shrink-0 items-center rounded-sm border border-gold bg-gradient-to-r from-gold to-gold-light px-5 text-sm font-bold text-navy shadow-[0_0_24px_rgba(201,162,39,0.25)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-light"
+          >
+            {content.nav.cta}
+          </a>
         </div>
       </header>
 
@@ -132,7 +129,6 @@ export default function Home() {
                 style={{ 
                   objectFit: "cover"
                 }}
-                className="opacity-45"
                 aria-hidden
               />
             </div>
@@ -187,7 +183,12 @@ export default function Home() {
             </FadeIn>
           </div>
         </section>
-
+        
+        {/* Parallax 1 */}
+        <div
+          className="h-100 w-full overflow-y-scroll bg-contain bg-fixed bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${paraLLaxImg1.src})` }}>
+        </div>
         
         {/* Soar System */}
         <section
@@ -280,10 +281,10 @@ export default function Home() {
           </div>
         </section>
         
-        {/* Parallax */}
+        {/* Parallax 2 */}
         <div
           className="h-100 w-full overflow-y-scroll bg-contain bg-fixed bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${paraLLaxImg.src})` }}>
+          style={{ backgroundImage: `url(${paraLLaxImg2.src})` }}>
         </div>
 
         {/* How it works */}
@@ -296,79 +297,227 @@ export default function Home() {
             >
               How It Works
             </h2>
+            <div className="mt-4 h-px w-32 bg-gradient-to-r from-gold to-transparent"></div>
+
+            <div className="grid gap-12 lg:grid-cols-2">
+              <div>
+                <h3 
+                  className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                  >
+                  <span className="text-gold">1. Apply</span>
+                </h3>
+                <div className="grid grid-flow-col-dense auto-rows-min max-w-2/3">
+                <div className="self-start">&nbsp; ⤷</div>
+                <p
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  
+                  Families tell us about the student, their goals, and current challenges
+                </p>
+                </div>
+                <h3 
+                  className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                  >
+                  <span className="text-gold">2. Diagnose</span>
+                </h3>
+                <div className="grid grid-flow-col-dense auto-rows-min max-w-2/3">
+                <div className="self-start">&nbsp; ⤷</div>
+                <p
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  
+                  We identify academic, organizational, and executive-function gaps.
+                </p>
+                </div>
+                <h3 
+                  className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                  >
+                  <span className="text-gold">3. Build the System</span>
+                </h3>
+                <div className="grid grid-flow-col-dense auto-rows-min max-w-2/3">
+                <div className="self-start">&nbsp; ⤷</div>
+                <p
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  
+                  We set up calendars, grade tracking, study routines, and accountability structures.
+                </p>
+                </div>
+                <h3 
+                  className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                  >
+                  <span className="text-gold">4. Coach & Monitor</span>
+                </h3>
+                <div className="grid grid-flow-col-dense">
+                <div>&nbsp; ⤷</div>
+                <p
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  
+                  Students receive weekly coaching, tutoring, gradebook checks, planning, and follow-through support.
+                </p>
+                </div>
+                <h3 
+                  className="relative mt-5 text-xl font-semibold text-balance sm:text-2xl"
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                  >
+                  <span className="text-gold">5. Grow</span>
+                </h3>
+                <div className="grid grid-flow-col-dense auto-rows-min max-w-2/3">
+                <div className="self-start">&nbsp; ⤷</div>
+                <p
+                  style={{
+                              fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  Students gradually take on more ownership and independence.
+                </p>
+                </div>
+              </div>
+              <div className="flex justify-center flex-column">
+                <Image
+                src={peer_tutor}
+                alt=""
+                sizes="100vw"
+                placeholder="blur"
+                style={{ 
+                  objectFit: "cover",
+                }}
+                className="opacity-70"
+                aria-hidden
+                />
+              </div>
+            </div>
 
           </FadeIn>
         </section>
 
-        {/* Ideal student */}
-        <section id="ideal-student" className="border-y border-gold/15 bg-navy/40">
-          <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-            <div className="grid gap-12 lg:grid-cols-2">
-              <FadeIn>
-                <h2
-                  className="text-3xl font-bold sm:text-4xl"
+        {/* Highlights carousel */}
+        <section className="border-y border-gold/15 bg-navy/40 py-16 sm:py-20">
+          <h2 
+            className="text-3xl font-bold text-center p-10 sm:text-4xl"
+            style={{
+              fontFamily: "var(--font-playfair), Georgia, serif",
+            }}
+          >
+            See Your Student Progress
+          </h2>
+          <Carousel
+            label={content.carousel.label}
+            slides={[
+              { ...content.carousel.slides[0], image: parent_portal1 },
+              { ...content.carousel.slides[1], image: calendar },
+              { ...content.carousel.slides[2], image: penImg },
+            ]}
+          />
+        </section>
+
+        {/* Meet the founder */}
+        <section id="founder" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-16">
+            <FadeIn>
+              <figure className="mx-auto w-full max-w-sm border border-gold/30 p-3 lg:max-w-none">
+                <div className="relative flex aspect-4/5 w-full items-center justify-center bg-navy/50 outline-1 -outline-offset-1 outline-[oklch(1_0_0/0.1)]">
+                  {/* TODO: swap this placeholder for the real portrait —
+                      import founderPortrait from "@/public/images/founder.png";
+                      then replace this <div> with:
+                      <Image src={founderPortrait} alt={content.founder.portraitAlt}
+                        fill sizes="(min-width: 1152px) 416px, (min-width: 1024px) 38vw, 100vw"
+                        placeholder="blur" className="object-cover" /> */}
+                  <div className="text-center">
+                    <User className="mx-auto size-10 text-gold/50" strokeWidth={1.5} aria-hidden />
+                    <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-ivory/45">
+                      Portrait to come
+                    </p>
+                  </div>
+                </div>
+              </figure>
+            </FadeIn>
+
+            <div>
+              <FadeIn delay={0.1}>
+                <h2 className="text-[10px] font-bold tracking-[0.4em] text-gold uppercase">
+                  {content.founder.eyebrow}
+                </h2>
+                <p
+                  className="mt-4 text-3xl font-bold text-balance sm:text-4xl"
                   style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
                 >
-                  {content.idealStudent.title}
-                </h2>
-                <p className="mt-4 text-lg text-gold-light/90">
-                  {content.idealStudent.intro}
+                  {content.founder.name}
                 </p>
-              </FadeIn>
-              <FadeIn delay={0.1}>
-                <ul className="space-y-4">
-                  {content.idealStudent.bullets.map((b) => (
-                    <li
-                      key={b}
-                      className="border-l border-gold/50 pl-5 text-sm leading-relaxed text-ivory/75"
+                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-light/80">
+                  {content.founder.title}
+                </p>
+                <div className="mt-6 space-y-4">
+                  {content.founder.bio.map((paragraph) => (
+                    <p
+                      key={paragraph}
+                      className="text-pretty leading-relaxed text-ivory/70"
                     >
-                      {b}
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </FadeIn>
+
+              <FadeIn delay={0.2} className="mt-8">
+                <blockquote className="border-l-2 border-gold/60 pl-5">
+                  <p
+                    className="text-lg text-balance italic text-ivory/90 sm:text-xl"
+                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+                  >
+                    &ldquo;{content.founder.belief}&rdquo;
+                  </p>
+                </blockquote>
+              </FadeIn>
+
+              <FadeIn delay={0.3} className="mt-8">
+                <ul className="space-y-2 text-sm text-ivory/60">
+                  {content.founder.credentials.map((credential) => (
+                    <li
+                      key={credential}
+                      className="flex gap-2 border-t border-gold/15 pt-2"
+                    >
+                      <span className="text-gold" aria-hidden>
+                        &#9670;
+                      </span>
+                      {credential}
                     </li>
                   ))}
                 </ul>
+                <a
+                  href="#apply"
+                  className="mt-8 inline-flex h-12 items-center justify-center border border-gold bg-gradient-to-r from-gold to-gold-light px-8 text-sm font-bold tracking-wider text-navy uppercase transition-[filter,scale] duration-200 ease-out hover:brightness-110 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none"
+                >
+                  {content.founder.ctaLabel}
+                </a>
               </FadeIn>
             </div>
           </div>
         </section>
 
-        {/* Framework */}
-        <section id="framework" className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-          <FadeIn className="text-center">
-            <h2
-              className="text-3xl font-bold sm:text-4xl"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-            >
-              {content.framework.title}
-            </h2>
-            <p className="mt-3 text-ivory/55">{content.framework.subtitle}</p>
-          </FadeIn>
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {content.framework.deliverables.map((d, i) => (
-              <FadeIn key={d.title} delay={i * 0.1}>
-                <article className="relative overflow-hidden border border-gold/25 p-8">
-                  <div
-                    className="absolute -right-6 -top-6 size-24 rounded-full bg-gold/5"
-                    aria-hidden
-                  />
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gold">
-                    {d.cadence}
-                  </p>
-                  <h3
-                    className="mt-4 text-2xl font-semibold"
-                    style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                  >
-                    {d.title}
-                  </h3>
-                  <p className="mt-4 text-sm leading-relaxed text-ivory/65">
-                    {d.description}
-                  </p>
-                </article>
-              </FadeIn>
-            ))}
-          </div>
-        </section>
-
-        {/* Guarantee — gold foil seal */}
         <section id="guarantee" className="px-4 py-20 sm:px-6">
           <FadeIn className="mx-auto max-w-3xl">
             <div className="relative border border-gold/50 bg-gradient-to-b from-navy-light/80 to-[#070d1a] p-10 sm:p-14">

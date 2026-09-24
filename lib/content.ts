@@ -19,8 +19,9 @@ export const content = {
   nav: {
     links: [
       { label: "Our Focus", href: "#soar-system" },
-      { label: "Ideal Student", href: "#ideal-student" },
-      { label: "Framework", href: "#framework" },
+      { label: "Ideal Student", href: "#pain-points" },
+      { label: "How It Works", href: "#how-it-works" },
+      { label: "Meet the Founder", href: "#founder" },
       { label: "Guarantee", href: "#guarantee" },
       { label: "Apply", href: "#apply" },
     ],
@@ -107,29 +108,25 @@ export const content = {
       },
     ],
   },
-  framework: {
-    title: "Our Framework & Deliverables",
-    subtitle: "High-touch mechanics that keep academics on track",
-    deliverables: [
-      {
-        title: "Weekly Study Logs",
-        description:
-          "Structured logs that capture what was studied, what was due, and what's next — building ownership and visibility.",
-        cadence: "Weekly",
-      },
-      {
-        title: "Gradebook Deadline Monitoring",
-        description:
-          "We watch portals, track assignments, and flag risks early so Sundays stop being a scramble.",
-        cadence: "Ongoing",
-      },
-      {
-        title: "Monthly Strategy Meetings",
-        description:
-          "Family strategy sessions to review progress, adjust plans, and align on the next academic milestone.",
-        cadence: "Monthly",
-      },
+  founder: {
+    // TODO: every field below is placeholder — replace with the founder's
+    // approved name, title, biography, credentials and portrait.
+    eyebrow: "Meet the Founder",
+    name: "Taylor Terry",
+    title: "(TODO: FOUNDER TITLE)",
+    portraitAlt: "(TODO: describe the founder's portrait)",
+    bio: [
+      "Placeholder biography paragraph. Two or three sentences on why the founder started Top-Tier Scholar Systems reads best here — the problem they kept seeing in Chicago classrooms, and what they built in response.",
+      "Placeholder biography paragraph. A second short paragraph on background and approach keeps the column balanced against the portrait without pushing the credentials below the fold.",
     ],
+    belief: "Placeholder founding belief — one line the founder would stand behind.",
+    credentials: [
+      "(TODO: credential or qualification one)",
+      "(TODO: credential or qualification two)",
+      "(TODO: credential or qualification three)",
+      "(TODO: credential or qualification four)",
+    ],
+    ctaLabel: "Apply For Coaching",
   },
   guarantee: {
     title: "Program Expectations & Our Guarantee",
@@ -167,6 +164,33 @@ export const content = {
     failMessage:
       "Something went wrong. Please try again shortly."
     
+  },
+  carousel: {
+    // TODO: placeholder copy — replace each slide with approved client copy.
+    label: "Program highlights",
+    slides: [
+      {
+        id: "slide-1",
+        eyebrow: "Overview",
+        title: "Keep track of your student through the dashboard",
+        body: "Here you'll observe what their weekly goals are and help them improve from week to week.",
+        imageAlt: "",
+      },
+      {
+        id: "slide-2",
+        eyebrow: "Calendar",
+        title: "See the bigger picture",
+        body: "Placeholder description for the second slide. Keep each slide roughly the same length so the card height stays steady as families click through.",
+        imageAlt: "",
+      },
+      {
+        id: "slide-3",
+        eyebrow: "Placeholder",
+        title: "Third slide headline goes here",
+        body: "Placeholder description for the third slide. Add or remove slides freely — the arrows, dots, and wrapping all read from this array.",
+        imageAlt: "",
+      },
+    ],
   },
   footer: {
     ctaLabel: "Apply Now",
