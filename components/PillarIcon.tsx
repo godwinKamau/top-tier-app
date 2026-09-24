@@ -3,25 +3,23 @@ import {
   Brain,
   ClipboardCheck,
   School,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import { content } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 const iconMap: Record<
-  (typeof content.pillars.items)[number]["icon"],
+  (typeof content.soarSystem.items)[number]["icon"],
   LucideIcon
 > = {
   graduationCap: GraduationCap,
   brain: Brain,
   clipboardCheck: ClipboardCheck,
   school: School,
-  users: Users,
 };
 
 type PillarIconProps = {
-  name: (typeof content.pillars.items)[number]["icon"];
+  name: (typeof content.soarSystem.items)[number]["icon"];
   className?: string;
 };
 

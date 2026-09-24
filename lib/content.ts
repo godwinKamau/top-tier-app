@@ -18,57 +18,50 @@ export const content = {
   },
   nav: {
     links: [
-      { label: "Our Focus", href: "#pillars" },
-      { label: "Ideal Student", href: "#ideal-student" },
-      { label: "Framework", href: "#framework" },
+      { label: "Our Focus", href: "#soar-system" },
+      { label: "Ideal Student", href: "#pain-points" },
+      { label: "How It Works", href: "#how-it-works" },
+      { label: "Meet the Founder", href: "#founder" },
       { label: "Guarantee", href: "#guarantee" },
       { label: "Apply", href: "#apply" },
     ],
-    cta: "Apply Now",
+    cta: "Apply For Coaching",
   },
   hero: {
     hookLine1: "It's Sunday Night…",
     hookLine2: "DO YOU KNOW YOUR STUDENT'S GRADES?",
     reassurance:
       "Relax. We've managed the deadlines so your only job is to be the parent.",
-    cta: "Apply Today",
-    // TODO: swap media — replace hero background with final Chicago skyline / academic imagery
+    cta: "Apply For Coaching",
     mediaAlt:
       "Placeholder for Chicago skyline and academic success imagery",
   },
-  pillars: {
-    title: "Our Focus — The 5 Pillars",
-    subtitle: `Powered by ${"The S.O.A.R. System™"}`,
+  soarSystem: {
+    title: "Powered by the S.O.A.R. System",
     items: [
       {
         icon: "graduationCap" as const,
-        title: "Academic Excellence",
+        title: "S - Small Wins",
         description:
-          "Rigorous **coursework support** that turns *A-potential* into *A-performance* across every class.",
+          "Consistent progress starts with attainable weekly goals. Each small success builds the confidence and momentum students need to take on bigger challenges.",
       },
       {
         icon: "brain" as const,
-        title: "Executive Functioning",
+        title: "O — Organization",
         description:
-          "**Systems** for planning, prioritization, and follow-through — skills that *compound for life*.",
+          "Every part of academic life has a system: calendars, gradebooks, deadlines, materials, and study routines, all structured to keep students prepared and in control.",
       },
       {
         icon: "clipboardCheck" as const,
-        title: "Accountability Systems",
+        title: "A — Accountability",
         description:
-          "**Weekly study logs**, deadline monitoring, and structured check-ins so *nothing slips*.",
+          "We monitor progress and follow up consistently, so assignments and commitments are completed rather than overlooked.",
       },
       {
         icon: "school" as const,
-        title: "Admission Prep (CPS HSAT)",
+        title: "R — Rigor",
         description:
-          "Targeted prep for **CPS Selective Enrollment / HSAT, ISEE, and ACT** with strategy that *sticks*.",
-      },
-      {
-        icon: "users" as const,
-        title: "Family Partnerships",
-        description:
-          "**High-touch coaching** for busy parents — clear updates, *calm Sundays*, shared ownership.",
+          "We prepare students to meet increasingly demanding academic expectations, developing the skills and habits that higher-level coursework requires.",
       },
     ],
   },
@@ -84,29 +77,56 @@ export const content = {
       "Ready for partnership — students and parents willing to commit to the system",
     ],
   },
-  framework: {
-    title: "Our Framework & Deliverables",
-    subtitle: "High-touch mechanics that keep academics on track",
-    deliverables: [
+  topTierSolutions: {
+    title: "Top Tier is the System Behind Your Student's Success.",
+    // TODO: placeholder copy — replace with real TTSS questions
+    // (pricing, session cadence, HSAT timelines, parent reporting)
+    items: [
       {
-        title: "Weekly Study Logs",
-        description:
-          "Structured logs that capture what was studied, what was due, and what's next — building ownership and visibility.",
-        cadence: "Weekly",
+        q: "Know exactly where things stand",
+        a: 'We track grades and missing assignments so nothing slips through the cracks and there are no surprises at progress reports or report cards.',
       },
       {
-        title: "Gradebook Deadline Monitoring",
-        description:
-          "We watch portals, track assignments, and flag risks early so Sundays stop being a scramble.",
-        cadence: "Ongoing",
+        q: "Stay ahead of every deadline",
+        a: 'We keep a running view of due dates, tests, and upcoming assessments, so your student is preparing early instead of scrambling at the last minute.',
       },
       {
-        title: "Monthly Strategy Meetings",
-        description:
-          "Family strategy sessions to review progress, adjust plans, and align on the next academic milestone.",
-        cadence: "Monthly",
+        q: "Start every week with a plan",
+        a: 'Together, we build a clear weekly academic plan that turns a long to-do list into manageable, realistic steps.',
+      },
+      {
+        q: "Focus on what matters most",
+        a: 'We teach students to prioritize assignments and responsibilities, so the most important work gets done first and nothing critical is left for the night before.',
+      },
+      {
+        q: "Build systems that actually work",
+        a: 'We help students set up organization systems for their materials, notes, and digital files that they can maintain on their own.',
+      },
+      {
+        q: "Get support when they're stuck",
+        a: "Tutoring and study support are built right in, so when a student needs help understanding the material or preparing for an exam, it's already part of the plan.",
       },
     ],
+  },
+  founder: {
+    // TODO: every field below is placeholder — replace with the founder's
+    // approved name, title, biography, credentials and portrait.
+    eyebrow: "Meet the Founder",
+    name: "Taylor Terry",
+    title: "(TODO: FOUNDER TITLE)",
+    portraitAlt: "(TODO: describe the founder's portrait)",
+    bio: [
+      "Placeholder biography paragraph. Two or three sentences on why the founder started Top-Tier Scholar Systems reads best here — the problem they kept seeing in Chicago classrooms, and what they built in response.",
+      "Placeholder biography paragraph. A second short paragraph on background and approach keeps the column balanced against the portrait without pushing the credentials below the fold.",
+    ],
+    belief: "Placeholder founding belief — one line the founder would stand behind.",
+    credentials: [
+      "(TODO: credential or qualification one)",
+      "(TODO: credential or qualification two)",
+      "(TODO: credential or qualification three)",
+      "(TODO: credential or qualification four)",
+    ],
+    ctaLabel: "Apply For Coaching",
   },
   guarantee: {
     title: "Program Expectations & Our Guarantee",
@@ -144,6 +164,33 @@ export const content = {
     failMessage:
       "Something went wrong. Please try again shortly."
     
+  },
+  carousel: {
+    // TODO: placeholder copy — replace each slide with approved client copy.
+    label: "Program highlights",
+    slides: [
+      {
+        id: "slide-1",
+        eyebrow: "Overview",
+        title: "Keep track of your student through the dashboard",
+        body: "Here you'll observe what their weekly goals are and help them improve from week to week.",
+        imageAlt: "",
+      },
+      {
+        id: "slide-2",
+        eyebrow: "Calendar",
+        title: "See the bigger picture",
+        body: "Placeholder description for the second slide. Keep each slide roughly the same length so the card height stays steady as families click through.",
+        imageAlt: "",
+      },
+      {
+        id: "slide-3",
+        eyebrow: "Placeholder",
+        title: "Third slide headline goes here",
+        body: "Placeholder description for the third slide. Add or remove slides freely — the arrows, dots, and wrapping all read from this array.",
+        imageAlt: "",
+      },
+    ],
   },
   footer: {
     ctaLabel: "Apply Now",
