@@ -7,6 +7,14 @@
 
 html {
   @apply font-sans scroll-smooth;
+  /* The scrollbar is part of the page. Muted gold thumb on the deep navy the
+     document actually sits on, rather than the OS default grey. */
+  scrollbar-color: #6b5a22 #070d1a;
+}
+
+::selection {
+  background-color: #c9a227;
+  color: #0f1f3d;
 }
 
 @theme inline {
@@ -15,6 +23,25 @@ html {
   --color-gold: #c9a227;
   --color-gold-light: #e6c65c;
   --color-ivory: #faf6ee;
+  --color-ivory-dark: #f1ece1;
+  --color-laurel: #4a6b4f;
+
+  /* Semantic tokens the components/ui/* primitives are written against.
+     Warm neutrals pulled toward the ivory/navy world — not shadcn's cool
+     greys — and a gold focus ring so keyboard focus reads as brand. */
+  --color-border: #ddd6c7;
+  --color-input: #cfc7b6;
+  --color-ring: #c9a227;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f1f3d;
+  --color-muted: #f1ece1;
+  --color-muted-foreground: #6f6a5e;
+  --color-primary: #c9a227;
+  --color-primary-foreground: #0f1f3d;
+  --color-secondary: #1c3260;
+  --color-secondary-foreground: #faf6ee;
+  --color-destructive: #9b2c2c;
+  --radius-md: 0.375rem;
 }
 
 @media (prefers-color-scheme: dark) {
