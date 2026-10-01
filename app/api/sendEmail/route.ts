@@ -1,99 +1,102 @@
-"use server"
 import { Resend } from "resend";
 import { content } from "@/lib/content";
+import { insertApplicant, recordConfirmation } from "@/lib/db/applicants";
+import { parseApplicationSubmission } from "@/lib/email/application";
+import { renderApplicationConfirmation } from "@/lib/email/applicationEmail";
 
 // Constructed per request rather than at module scope: the Resend constructor
 // throws on a missing key, which at module scope took the whole route down with
 // an HTML error page instead of a JSON 500 the form can show a message for.
 function getResend() {
-    const key = process.env.RESEND_API_KEY;
-    if (!key) return null;
-    return new Resend(key);
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
 }
 
-const f = content.apply.fields;
-
-// Submitted field -> the label a human reads in the email, in the order the
-// form asks for them. Anything not listed here is ignored (React appends
-// $ACTION_* keys to the FormData).
-const FIELD_LABELS: Record<string, string> = {
-    parentName: f.parentName,
-    email: f.email,
-    phone: f.phone,
-    studentName: f.studentName,
-    grade: f.grade,
-    challenge: f.challenge,
-    message: f.message,
-};
-
-function escapeHtml(value: string) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+// Email clients cannot resolve a relative /logo.png, so images need an
+// absolute origin. Falling back to the production host keeps a missing env var
+// from silently shipping a broken image.
+function getBaseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://toptierscholarsystems.com").replace(
+    /\/$/,
+    ""
+  );
 }
 
-function buildSummary(body: Record<string, unknown>) {
-    const rows = Object.entries(FIELD_LABELS)
-        .map(([key, label]) => [label, String(body[key] ?? "").trim()] as const)
-        .filter(([, value]) => value.length > 0)
-        .map(
-            ([label, value]) =>
-                `<tr><td style="padding:4px 16px 4px 0;color:#6f6a5e;font:600 12px/1.5 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;vertical-align:top;white-space:nowrap">${escapeHtml(
-                    label
-                )}</td><td style="padding:4px 0;color:#0f1f3d;font:14px/1.5 system-ui,sans-serif">${escapeHtml(
-                    value
-                ).replace(/\n/g, "<br/>")}</td></tr>`
-        )
-        .join("");
+const FROM = `${content.brand.name} <onboarding@toptierscholarsystems.com>`;
 
-    return `<div style="background:#faf6ee;padding:24px">
-  <h1 style="margin:0 0 4px;color:#0f1f3d;font:700 20px/1.3 Georgia,serif">Application received</h1>
-  <p style="margin:0 0 20px;color:#6f6a5e;font:14px/1.5 system-ui,sans-serif">Thanks for applying to ${escapeHtml(
-      content.brand.name
-  )}. Here is what you sent us — we'll be in touch within 1–2 business days.</p>
-  <table style="border-collapse:collapse">${rows}</table>
-</div>`;
-}
+export async function POST(request: Request) {
+  const parsed = parseApplicationSubmission(await request.json().catch(() => null));
+  if (!parsed.ok) {
+    return Response.json(
+      { error: "Missing required fields.", missing: parsed.missing },
+      { status: 400 }
+    );
+  }
+  const { submission } = parsed;
 
-export async function POST( request:Request ){
-    const resend = getResend()
-    if (!resend) {
-        console.error("RESEND_API_KEY is not set; application email was not sent.")
-        return Response.json({ error: "Email is not configured." }, { status: 500 });
-    }
+  // Stored before anything can fail the request, and never allowed to fail it
+  // itself: a lead that reached the form is worth more than its confirmation, so
+  // neither a database outage nor a missing email key is permitted to discard a
+  // submission. A failed insert returns null and logs the whole submission for
+  // recovery by hand. This sits above the Resend check for that reason — a
+  // misconfigured email key used to mean the submission was simply dropped.
+  const applicantId = await insertApplicant(submission);
 
-    const body = await request.json()
-    const email = body.email
-    const parentName = body.parentName
+  const resend = getResend();
+  if (!resend) {
+    console.error("RESEND_API_KEY is not set; application email was not sent.");
+    return Response.json({ error: "Email is not configured." }, { status: 500 });
+  }
 
-    try {
-        const { data : sendData, error: sendError } = await resend.emails.send({
-        from: 'Acme <onboarding@toptierscholarsystems.com>',
-        to: `${email}`,
-        subject: `Hello ${parentName}`,
-        html: buildSummary(body),
+  try {
+    // Rendered here rather than handed to Resend as `react:`. Resend's react
+    // path only ever produces `html`, so a plain-text part would be impossible,
+    // and a template throw would surface as an opaque Resend failure instead of
+    // landing in this try/catch. The rsc layer gives templates no error
+    // boundary, so this catch is the only thing standing under them.
+    const { html, text, subject } = await renderApplicationConfirmation(
+      submission,
+      getBaseUrl()
+    );
+
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to: submission.email,
+      subject,
+      html,
+      text,
+    });
+
+    // Logged either way, so the dashboard can distinguish a family that was
+    // confirmed from one whose application was only recorded. Awaited rather
+    // than fired and forgotten: a serverless instance can be frozen the moment
+    // this handler returns, and a dangling promise would simply never run.
+    if (error) {
+      console.error("Resend send failed", error);
+      if (applicantId) {
+        await recordConfirmation(applicantId, submission.email, subject, {
+          status: "failed",
+          error: error.message,
         });
-
-        if ( sendError ) {
-            console.error( sendError )
-            return Response.json({ sendError }, { status: 500 });
-        }
-
-        const { data: statusData, error: statusError } = await resend.emails.get(
-            sendData?.id ?? ""
-        );
-
-        if ( statusError ) {
-            console.error( statusError )
-        } else {
-            console.log(statusData)
-        }
-
-        return Response.json( {sendData, email} );
-
-    } catch (error) {
-        return Response.json({ error }, { status: 500 });
+      }
+      return Response.json({ error: error.message }, { status: 502 });
     }
+
+    if (applicantId) {
+      await recordConfirmation(applicantId, submission.email, subject, {
+        status: "sent",
+        resendId: data?.id ?? null,
+        renderedHtml: html,
+      });
+    }
+
+    console.log(`Application confirmation queued: ${data?.id} -> ${submission.email}`);
+    return Response.json({ id: data?.id, email: submission.email });
+  } catch (error) {
+    // Reached when rendering throws, which is before there is a subject to log
+    // a send row against — so this one stays a log line only.
+    console.error("Application confirmation failed", error);
+    return Response.json({ error: "Could not send confirmation." }, { status: 500 });
+  }
 }
