@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import Image, { type StaticImageData } from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type CarouselSlide = {
   id: string;
-  eyebrow: string;
+  /** Short noun that names the screen; doubles as the tab label. */
+  tab: string;
   title: string;
+  /** Second line of the headline, set in gold italic. */
+  titleAccent: string;
   body: string;
+  detail: string;
   imageAlt: string;
   image: StaticImageData;
 };
@@ -21,17 +24,22 @@ type CarouselProps = {
   className?: string;
 };
 
-/** How far an off-screen slide sits from the card, in px. */
-const SLIDE_OFFSET = 24;
+/** How far a resting slide sits from the card, in px. */
+const SLIDE_OFFSET = 20;
 
 export function Carousel({ slides, label, className }: CarouselProps) {
   const reduce = useReducedMotion();
+  const uid = useId();
   const count = slides.length;
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [{ index, previous, direction }, setPosition] = useState({
     index: 0,
     previous: -1,
     direction: 1,
   });
+
+  const tabId = (i: number) => `${uid}-tab-${slides[i].id}`;
+  const panelId = (i: number) => `${uid}-panel-${slides[i].id}`;
 
   const goTo = useCallback(
     (next: number, dir: number) =>
@@ -43,21 +51,26 @@ export function Carousel({ slides, label, className }: CarouselProps) {
     [count],
   );
 
-  const goPrev = useCallback(() => goTo(index - 1, -1), [goTo, index]);
-  const goNext = useCallback(() => goTo(index + 1, 1), [goTo, index]);
-
+  // Tabs with automatic activation: the arrow keys move focus and selection
+  // together, so the panel always matches the tab the reader is standing on.
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      goPrev();
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      goNext();
-    }
+    const moves: Record<string, number | undefined> = {
+      ArrowLeft: index - 1,
+      ArrowRight: index + 1,
+      Home: 0,
+      End: count - 1,
+    };
+    const next = moves[event.key];
+    if (next === undefined) return;
+
+    event.preventDefault();
+    const wrapped = ((next % count) + count) % count;
+    goTo(wrapped, wrapped > index ? 1 : -1);
+    tabRefs.current[wrapped]?.focus();
   }
 
-  // The outgoing slide leaves against the travel direction; every other
-  // inactive slide waits on the side the next one should arrive from.
+  // The outgoing panel leaves against the travel direction; every other
+  // resting panel waits on the side the next one should arrive from.
   function restingX(slideIndex: number) {
     if (reduce || slideIndex === index) return 0;
     if (slideIndex === previous) return -direction * SLIDE_OFFSET;
@@ -65,33 +78,62 @@ export function Carousel({ slides, label, className }: CarouselProps) {
   }
 
   return (
-    <div
-      role="group"
-      aria-roledescription="carousel"
-      aria-label={label}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        "mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-5 px-4 sm:gap-x-5 sm:px-6",
-        className,
-      )}
-    >
-      <ArrowButton
-        direction="prev"
-        onClick={goPrev}
-        className="col-start-1 row-start-2 lg:row-start-1"
-      />
-
-      <div className="col-span-3 row-start-1 grid rounded-2xl bg-navy/60 p-2 shadow-[0_1px_2px_rgba(0,0,0,0.35),0_10px_24px_-10px_rgba(0,0,0,0.55),0_28px_56px_-28px_rgba(0,0,0,0.65)] lg:col-span-1 lg:col-start-2">
+    <div className={cn("mx-auto w-full max-w-[86rem] px-4 sm:px-6", className)}>
+      <div
+        role="tablist"
+        aria-label={label}
+        onKeyDown={handleKeyDown}
+        className="flex flex-wrap border-b border-gold/20"
+      >
         {slides.map((slide, i) => {
           const isActive = i === index;
-          const imageFirst = i % 2 === 0;
+
+          return (
+            <button
+              key={slide.id}
+              ref={(node) => {
+                tabRefs.current[i] = node;
+              }}
+              type="button"
+              role="tab"
+              id={tabId(i)}
+              aria-selected={isActive}
+              aria-controls={panelId(i)}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => goTo(i, i > index ? 1 : -1)}
+              className={cn(
+                "relative px-5 py-4 text-xs font-bold tracking-[0.18em] uppercase transition-colors duration-200 ease-out first:pl-0 focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none",
+                isActive ? "text-gold" : "text-ivory/50 hover:text-ivory/85",
+              )}
+            >
+              {slide.tab}
+              {isActive && (
+                <motion.span
+                  layoutId={`${uid}-tab-underline`}
+                  aria-hidden
+                  className="absolute inset-x-0 -bottom-px h-0.5 bg-gold"
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : { type: "spring", duration: 0.4, bounce: 0 }
+                  }
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-10 grid lg:mt-14">
+        {slides.map((slide, i) => {
+          const isActive = i === index;
 
           return (
             <motion.div
               key={slide.id}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} of ${count}`}
+              role="tabpanel"
+              id={panelId(i)}
+              aria-labelledby={tabId(i)}
               aria-hidden={!isActive}
               inert={!isActive}
               initial={false}
@@ -100,130 +142,66 @@ export function Carousel({ slides, label, className }: CarouselProps) {
                 reduce
                   ? { duration: 0 }
                   : {
-                      // Sides alternate, so the outgoing slide must clear the
-                      // card before the incoming one fades in — otherwise the
-                      // next slide's text sits on top of the current photo.
+                      // The outgoing panel clears the stack before the incoming
+                      // one fades up, so two headlines never overlap mid-swap.
                       opacity: {
-                        duration: 0.16,
+                        duration: 0.18,
                         delay: isActive ? 0.16 : 0,
                         ease: [0.2, 0, 0, 1],
                       },
                       x: {
                         type: "spring",
-                        duration: 0.3,
+                        duration: 0.34,
                         bounce: 0,
                         delay: isActive ? 0.16 : 0,
                       },
                     }
               }
-              className={cn(
-                "grid gap-5 [grid-area:1/1] sm:gap-7 lg:items-center lg:gap-8",
-                // The picture keeps 65% of the row whichever side it lands on.
-                imageFirst
-                  ? "lg:grid-cols-[65fr_35fr]"
-                  : "lg:grid-cols-[35fr_65fr]",
-              )}
+              className="grid gap-8 [grid-area:1/1] lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-center lg:gap-14"
             >
-              <div
-                className={cn(
-                  "relative aspect-3/2 w-full overflow-hidden rounded-lg bg-navy/30 outline-1 -outline-offset-1 outline-[oklch(1_0_0/0.1)]",
-                  imageFirst ? "lg:order-1" : "lg:order-2",
-                )}
-              >
+              <div className="flex flex-col justify-center">
+                <h3
+                  className="text-[2.125rem] leading-[1.03] font-bold tracking-[-0.02em] text-balance sm:text-[2.625rem] lg:text-[3.125rem]"
+                  style={{
+                    fontFamily: "var(--font-playfair), Georgia, serif",
+                  }}
+                >
+                  {slide.title}
+                  <span className="block text-gold italic">
+                    {slide.titleAccent}
+                  </span>
+                </h3>
+                <p className="mt-6 text-lg leading-relaxed text-pretty text-ivory/85">
+                  {slide.body}
+                </p>
+                <div
+                  className="mt-8 h-px w-24 bg-gradient-to-r from-gold to-transparent"
+                  aria-hidden
+                />
+                <p className="mt-8 text-base leading-relaxed text-pretty text-ivory/60">
+                  {slide.detail}
+                </p>
+              </div>
+
+              {/* Stacked, the screen leads: the tab above it already named
+                  what it is, so the headline reads as a caption for it.
+                  The frame takes its height from the image's own intrinsic
+                  ratio rather than an aspect utility — with `fill`, the height
+                  lives only in the stylesheet, and an image that decodes before
+                  the CSS applies measures zero. */}
+              <div className="order-first w-full overflow-hidden rounded-xl bg-navy/50 shadow-[0_2px_4px_rgba(0,0,0,0.4),0_18px_40px_-16px_rgba(0,0,0,0.6),0_44px_80px_-40px_rgba(0,0,0,0.8)] outline-1 -outline-offset-1 outline-[oklch(1_0_0/0.12)] lg:order-none">
                 <Image
                   src={slide.image}
                   alt={slide.imageAlt}
-                  fill
-                  sizes="(min-width: 1152px) 608px, (min-width: 1024px) 58vw, 100vw"
+                  sizes="(min-width: 1536px) 896px, (min-width: 1024px) 60vw, 100vw"
                   placeholder="blur"
-                  className="object-contain"
+                  className="h-auto w-full"
                 />
-              </div>
-
-              <div
-                className={cn(
-                  "flex flex-col justify-center px-2 pb-3 lg:px-6 lg:pb-0",
-                  imageFirst ? "lg:order-2" : "lg:order-1",
-                )}
-              >
-                <p className="text-xs font-semibold tracking-[0.2em] text-gold uppercase">
-                  {slide.eyebrow}
-                </p>
-                <h3
-                  className="mt-3 text-2xl font-bold text-balance sm:text-3xl"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-                >
-                  {slide.title}
-                </h3>
-                <p className="mt-4 text-pretty text-ivory/80">{slide.body}</p>
               </div>
             </motion.div>
           );
         })}
       </div>
-
-      <div className="col-start-2 row-start-2 flex items-center justify-center">
-        {slides.map((slide, i) => (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={() => goTo(i, i > index ? 1 : -1)}
-            aria-label={`Go to slide ${i + 1}`}
-            aria-current={i === index ? "true" : undefined}
-            className="group inline-flex size-11 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none"
-          >
-            <span
-              className={cn(
-                "h-1.5 rounded-full transition-[width,background-color] duration-200 ease-out",
-                i === index
-                  ? "w-6 bg-gold"
-                  : "w-1.5 bg-ivory/30 group-hover:bg-ivory/60",
-              )}
-            />
-          </button>
-        ))}
-      </div>
-
-      <ArrowButton
-        direction="next"
-        onClick={goNext}
-        className="col-start-3 row-start-2 lg:row-start-1"
-      />
-
-      <p aria-live="polite" className="sr-only">
-        {`Slide ${index + 1} of ${count}: ${slides[index].title}`}
-      </p>
     </div>
-  );
-}
-
-function ArrowButton({
-  direction,
-  onClick,
-  className,
-}: {
-  direction: "prev" | "next";
-  onClick: () => void;
-  className?: string;
-}) {
-  const Icon = direction === "prev" ? ChevronLeft : ChevronRight;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={direction === "prev" ? "Previous slide" : "Next slide"}
-      className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-gold/40 bg-navy/60 text-gold transition-[background-color,color,border-color,scale] duration-200 ease-out hover:border-gold hover:bg-gold hover:text-navy active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none",
-        className,
-      )}
-    >
-      {/* Chevrons read off-centre in a circle; nudge them back optically. */}
-      <Icon
-        aria-hidden
-        strokeWidth={2}
-        className={cn("size-5", direction === "prev" ? "-translate-x-px" : "translate-x-px")}
-      />
-    </button>
   );
 }

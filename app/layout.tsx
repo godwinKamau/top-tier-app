@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Manrope } from "next/font/google";
+import { Playfair_Display, Manrope, Caveat } from "next/font/google";
 import "./globals.css"
 
 const playfair = Playfair_Display({
@@ -8,6 +8,10 @@ const playfair = Playfair_Display({
 });
 const manrope = Manrope({
   variable: "--font-manrope",
+  subsets: ["latin"],
+});
+const caveat = Caveat({
+  variable: "--font-caveat",
   subsets: ["latin"],
 });
 
@@ -24,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${playfair.variable} h-full antialiased`}
+      className={`${manrope.variable} ${playfair.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
