@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, getTableColumns, sql } from "drizzle-orm";
+import { and, count, desc, eq, exists, getTableColumns, sql } from "drizzle-orm";
 import { getDb } from "./index";
 import { applicants, emailSends } from "./schema";
 import type { ApplicationField, ApplicationSubmission } from "@/lib/email/application";
@@ -156,4 +156,12 @@ export async function listApplicants(): Promise<ApplicantListRow[]> {
     })
     .from(applicants)
     .orderBy(desc(applicants.createdAt));
+}
+
+/** Applicants nobody has moved past `new` yet — the Applicants tab's badge. */
+export async function countNewApplicants(): Promise<number> {
+  const db = getDb();
+  if (!db) throw new Error("DATABASE_URL is not set.");
+  const [row] = await db.select({ n: count() }).from(applicants).where(eq(applicants.stage, "new"));
+  return row?.n ?? 0;
 }

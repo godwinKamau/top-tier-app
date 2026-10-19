@@ -18,6 +18,11 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // Portal (prototype) vocabulary: navy with gold lettering for the
+        // primary action, a ruled white button for everything secondary.
+        ink: "rounded-md focus-visible:ring-0 bg-ink font-bold text-gold-soft hover:bg-navy-light",
+        line: "rounded-md focus-visible:ring-0 border-[1.5px] border-line-strong bg-card font-semibold text-ink hover:border-gold hover:bg-gold-wash",
+        "on-ink": "rounded-md focus-visible:ring-0 bg-gold font-bold text-ink hover:bg-gold-light",
       },
       size: {
         default:
@@ -31,6 +36,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        portal: "h-9 gap-1.5 px-4 text-[0.8125rem]",
+        "portal-sm": "h-8 gap-1.5 px-3 text-xs",
       },
     },
     defaultVariants: {

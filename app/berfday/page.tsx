@@ -1,109 +1,122 @@
 import type { Metadata } from "next";
-import { LockKeyhole } from "lucide-react";
-import { AccessGate } from "@/components/berfday/AccessGate";
-import {
-  ApplicationsTable,
-  type ApplicationView,
-} from "@/components/berfday/ApplicationsTable";
-import { Button } from "@/components/ui/button";
-import { getDashboardConfigError, isDashboardAuthenticated } from "@/lib/auth/dashboard";
-import { listApplicants } from "@/lib/db/applicants";
-import { signOutOfDashboard } from "./actions";
+import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { Plus, Users } from "lucide-react";
+import { NotAuthorized } from "@/components/berfday/NotAuthorized";
+import { ActionForm } from "@/components/goals/ActionForm";
+import { StudentCard } from "@/components/portal/StudentCard";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getDashboardAccess } from "@/lib/auth/dashboard";
+import { getCurrentRoster } from "@/lib/goals/view";
+import { formatWeekLabel } from "@/lib/week";
+import { createStudentAction } from "./students/actions";
 
 export const metadata: Metadata = {
-  title: "Applications",
+  title: "Students",
   // The gate stops a visitor reading the data; noindex stops the URL being
   // handed to people who would not otherwise know it exists.
   robots: { index: false, follow: false },
 };
 
-/**
- * Pinned rather than left to the server's locale. Both the timezone and the
- * locale are fixed so the rendered string does not depend on where the code
- * happens to be running, and the client is Chicago-based.
- */
-const DATE_ZONE = "America/Chicago";
-
-const fullFormat = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "full",
-  timeStyle: "short",
-  timeZone: DATE_ZONE,
-});
-
-const shortFormat = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: DATE_ZONE,
-});
-
-export default async function BerfdayPage() {
-  // Reading the session cookie opts this page into dynamic rendering, so the
-  // signed-in version is never prerendered and served from a cache.
-  if (!(await isDashboardAuthenticated())) {
-    if (getDashboardConfigError()) return <NotConfigured />;
-    return <AccessGate />;
+/** The admin's front page: this week's roster, students who are behind first. */
+export default async function RosterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ add?: string }>;
+}) {
+  const access = await getDashboardAccess();
+  if (access.status === "signed-out") {
+    // Sends them to /sign-in with a redirect back here once they are through.
+    const { redirectToSignIn } = await auth();
+    return redirectToSignIn();
   }
+  if (access.status === "forbidden") return <NotAuthorized />;
 
-  // Deliberately unguarded: an unreachable database should surface as the error
-  // page, not as a dashboard that looks like nobody has applied.
-  const rows = await listApplicants();
-
-  // Nullable columns are collapsed to "" here rather than in the table, so the
-  // component never has to decide what a missing answer looks like.
-  const applications: ApplicationView[] = rows.map((row) => ({
-    id: row.id,
-    parentName: row.parentName,
-    email: row.parentEmail,
-    phone: row.phone ?? "",
-    studentName: row.studentName,
-    grade: row.grade ?? "",
-    challenge: row.challenge ?? "",
-    message: row.message ?? "",
-    stage: row.stage,
-    confirmationSent: row.confirmationSent,
-    receivedAt: fullFormat.format(row.createdAt),
-    receivedAtShort: shortFormat.format(row.createdAt),
-  }));
+  const { week, rows } = await getCurrentRoster();
+  const adding = (await searchParams).add === "1";
+  const behind = rows.filter((r) => r.done < r.counted).length;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto w-full max-w-[1320px] px-4 pt-7 pb-20 sm:px-6">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-navy">
-            Applications
+          <h1 className="font-[family-name:var(--font-playfair)] text-[1.625rem] font-bold text-ink">
+            My Students
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {applications.length} submission{applications.length === 1 ? "" : "s"}, newest first.
+          <p className="mt-1 text-[0.8125rem] font-medium text-subtle">
+            Week of {formatWeekLabel(week)} · {rows.length} student{rows.length === 1 ? "" : "s"}
+            {rows.length > 0 && ` · ${behind === 0 ? "everyone is caught up" : `${behind} with goals still open`}`}
           </p>
         </div>
-        <form action={signOutOfDashboard}>
-          <Button type="submit" variant="outline" size="sm">
-            Sign out
-          </Button>
-        </form>
+        {/* The page's primary action, where the prototype puts it. A plain link
+            that opens the form below, so it works before any JS loads. */}
+        <Link href="/berfday?add=1#add-student" className={buttonVariants({ variant: "ink", size: "portal" })}>
+          <Plus aria-hidden /> Add student
+        </Link>
       </div>
 
-      <div className="mt-6">
-        <ApplicationsTable rows={applications} />
-      </div>
-    </main>
-  );
-}
+      {rows.length === 0 ? (
+        <div className="rounded-[9px] border-[1.5px] border-dashed border-line-strong bg-card px-6 py-14 text-center">
+          <Users className="mx-auto mb-3 size-9 text-gold" aria-hidden />
+          <p className="font-bold text-ink">Add your first student</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-subtle text-pretty">
+            Once a student is on the roster you can set their weekly S.O.A.R. goals and watch them
+            fill in here.
+          </p>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3.5">
+          {rows.map((row) => (
+            <li key={row.student.id} className="grid">
+              <StudentCard row={row} />
+            </li>
+          ))}
+        </ul>
+      )}
 
-function NotConfigured() {
-  return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-16">
-      <div className="max-w-md border border-border bg-card p-8 text-center">
-        <LockKeyhole className="mx-auto mb-4 size-9 text-muted-foreground" aria-hidden />
-        <h1 className="font-semibold text-navy">This dashboard is not configured.</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">
-          Set <code className="font-mono text-xs">DASHBOARD_ACCESS_CODE</code> and{" "}
-          <code className="font-mono text-xs">DASHBOARD_SESSION_SECRET</code> in the environment,
-          then reload. Nothing is readable until both are present.
-        </p>
-      </div>
+      <details
+        id="add-student"
+        className="group mt-8 scroll-mt-24 max-w-2xl rounded-[9px] border-[1.5px] border-line bg-card open:shadow-[0_1px_2px_rgba(23,39,79,0.06)]"
+        open={rows.length === 0 || adding}
+      >
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[0.8125rem] font-bold text-ink [&::-webkit-details-marker]:hidden">
+          <span className="grid size-6 place-items-center rounded-md bg-ink text-gold-soft transition-transform duration-200 group-open:rotate-45">
+            <Plus className="size-3.5" aria-hidden />
+          </span>
+          Add a student
+        </summary>
+        <div className="border-t border-line px-4 pt-3 pb-4">
+          <p className="text-[0.8125rem] text-subtle text-pretty">
+            Then invite the same email from the Clerk dashboard. Their first visit to the student
+            portal links the account to this profile.
+          </p>
+          <ActionForm action={createStudentAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="student-name">Name</Label>
+              <Input id="student-name" name="name" required autoComplete="off" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="student-email">Email</Label>
+              <Input id="student-email" name="email" type="email" required autoComplete="off" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="student-grade">Grade</Label>
+              <Input id="student-grade" name="grade" placeholder="e.g. 10th" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="student-school">School</Label>
+              <Input id="student-school" name="school" />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" variant="ink" size="portal">
+                Add student
+              </Button>
+            </div>
+          </ActionForm>
+        </div>
+      </details>
     </main>
   );
 }
