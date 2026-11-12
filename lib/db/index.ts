@@ -20,3 +20,10 @@ export function getDb(): NeonHttpDatabase<typeof schema> | null {
   cached ??= drizzle(url, { schema });
   return cached;
 }
+
+/** For reads and staff/student writes, where a missing database is an error worth surfacing. */
+export function requireDb(): NeonHttpDatabase<typeof schema> {
+  const db = getDb();
+  if (!db) throw new Error("DATABASE_URL is not set.");
+  return db;
+}

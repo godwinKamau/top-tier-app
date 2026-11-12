@@ -26,6 +26,22 @@ html {
   --color-ivory-dark: #f1ece1;
   --color-laurel: #4a6b4f;
 
+  /* Portal (admin + student), from the client-approved prototype. Secondary
+     text is #6f695b rather than the prototype's #7c7566, which failed 4.5:1 on
+     ivory. */
+  --color-portal-blue: #21408d;
+  --color-ink: #17274f;
+  --color-ink-soft: #3d382e;
+  --color-gold-soft: #e8cd6b;
+  --color-gold-deep: #806718;
+  --color-line: #e2dcd0;
+  --color-line-strong: #d8d1c2;
+  --color-track: #e8e2d4;
+  --color-done: #4f6327;
+  --color-done-wash: #eef1e4;
+  --color-gold-wash: #fbf5e1;
+  --color-subtle: #6f695b;
+
   /* Semantic tokens the components/ui/* primitives are written against.
      Warm neutrals pulled toward the ivory/navy world — not shadcn's cool
      greys — and a gold focus ring so keyboard focus reads as brand. */
@@ -60,4 +76,60 @@ html {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Everything under /berfday and /portal. Manrope is the portal's one UI face;
+   Playfair is reserved for page titles and the S.O.A.R. letters. */
+.portal-root {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  color: var(--color-ink);
+  background: var(--color-ivory);
+  font-variant-numeric: tabular-nums;
+}
+.portal-root ::selection {
+  background-color: var(--color-gold-soft);
+  color: var(--color-ink);
+}
+/* Deep gold: the brand gold is under 3:1 on ivory and white. */
+.portal-root :focus-visible {
+  outline: 2px solid var(--color-gold-deep);
+  outline-offset: 2px;
+}
+.portal-root input,
+.portal-root textarea,
+.portal-root select {
+  caret-color: var(--color-gold-deep);
+}
+/* The marketing site scrolls on deep navy; the portal sits on ivory. */
+html:has(.portal-root) {
+  scrollbar-color: #cbbf9c #faf6ee;
+  background: #faf6ee;
+}
+/* The prototype's form controls: 1.5px ruled fields, 6px corners, gold focus.
+   Unlayered so they beat the shared components' defaults, which is why they
+   only set what no single instance overrides: no font size, and the height
+   steps aside for an input that sets its own. */
+.portal-root [data-slot="input"],
+.portal-root [data-slot="select"],
+.portal-root [data-slot="textarea"] {
+  border-width: 1.5px;
+  border-color: var(--color-line-strong);
+  border-radius: 6px;
+  background-color: #fff;
+  color: var(--color-ink);
+}
+.portal-root [data-slot="input"]:not(.h-8),
+.portal-root [data-slot="select"] {
+  height: 2.375rem;
+}
+.portal-root [data-slot="input"]:focus-visible,
+.portal-root [data-slot="select"]:focus-visible,
+.portal-root [data-slot="textarea"]:focus-visible {
+  outline: none;
+  border-color: var(--color-gold-deep);
+  box-shadow: 0 0 0 3px rgb(201 162 39 / 0.22);
+}
+.portal-root [data-slot="label"] {
+  font-weight: 700;
+  color: var(--color-ink);
 }

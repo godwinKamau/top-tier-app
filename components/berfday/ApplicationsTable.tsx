@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { ChevronRight, Inbox, MailCheck, MailX } from "lucide-react";
+import { Pill } from "@/components/portal/Pill";
 import { content } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
@@ -39,10 +40,10 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="border border-border bg-card p-12 text-center">
-        <Inbox className="mx-auto mb-4 size-10 text-muted-foreground/60" aria-hidden />
-        <p className="font-semibold text-navy">No applications yet.</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="rounded-[9px] border-[1.5px] border-line bg-card p-12 text-center">
+        <Inbox className="mx-auto mb-4 size-10 text-subtle/60" aria-hidden />
+        <p className="font-bold text-ink">No applications yet.</p>
+        <p className="mt-1 text-sm text-subtle">
           Submissions from the apply form will appear here.
         </p>
       </div>
@@ -50,13 +51,13 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
   }
 
   return (
-    <div className="overflow-x-auto border border-border bg-card">
+    <div className="overflow-x-auto rounded-[9px] border-[1.5px] border-line bg-card shadow-[0_1px_2px_rgba(23,39,79,0.06)]">
       <table className="w-full border-collapse text-left text-sm">
         <caption className="sr-only">
           Applications received, newest first. Each row expands to show the full submission.
         </caption>
         <thead>
-          <tr className="border-b border-border bg-muted/60 text-xs tracking-wide text-muted-foreground uppercase">
+          <tr className="border-b border-line bg-ivory text-[0.6875rem] tracking-[0.1em] text-subtle uppercase">
             <th scope="col" className="w-8" />
             <th scope="col" className="px-3 py-2.5 font-semibold">
               Received
@@ -89,8 +90,8 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
               <Fragment key={row.id}>
                 <tr
                   className={cn(
-                    "border-b border-border/70 transition-colors",
-                    open ? "bg-ivory" : "hover:bg-muted/40"
+                    "border-b border-line/80 transition-colors duration-150",
+                    open ? "bg-gold-wash" : "hover:bg-ivory"
                   )}
                 >
                   <td className="pl-2">
@@ -99,7 +100,7 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
                       onClick={() => setOpenId(open ? null : row.id)}
                       aria-expanded={open}
                       aria-controls={`detail-${row.id}`}
-                      className="grid size-6 place-items-center rounded text-navy/50 transition-colors hover:text-navy focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      className="grid size-6 place-items-center rounded text-ink/50 transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     >
                       <span className="sr-only">
                         {open ? "Hide" : "Show"} the full application from {row.parentName}
@@ -110,15 +111,15 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
                       />
                     </button>
                   </td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground tabular-nums">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-subtle tabular-nums">
                     {row.receivedAtShort}
                   </td>
-                  <td className="px-3 py-2.5 font-medium text-navy">{row.parentName}</td>
-                  <td className="px-3 py-2.5 text-navy/80">{row.studentName || "—"}</td>
-                  <td className="hidden px-3 py-2.5 whitespace-nowrap text-navy/80 sm:table-cell">
+                  <td className="px-3 py-2.5 font-semibold text-ink">{row.parentName}</td>
+                  <td className="px-3 py-2.5 text-ink/85">{row.studentName || "—"}</td>
+                  <td className="hidden px-3 py-2.5 whitespace-nowrap text-ink/85 sm:table-cell">
                     {row.grade || "—"}
                   </td>
-                  <td className="hidden max-w-[22ch] truncate px-3 py-2.5 text-navy/80 md:table-cell">
+                  <td className="hidden max-w-[22ch] truncate px-3 py-2.5 text-ink/85 md:table-cell">
                     {row.challenge || "—"}
                   </td>
                   <td className="px-3 py-2.5 text-center">
@@ -134,15 +135,13 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
                 </tr>
 
                 {open && (
-                  <tr id={`detail-${row.id}`} className="border-b border-border">
+                  <tr id={`detail-${row.id}`} className="border-b border-line bg-gold-wash">
                     <td />
                     <td colSpan={6} className="px-3 pt-1 pb-5">
                       <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
                         <Detail label="Received">{row.receivedAt}</Detail>
                         <Detail label="Stage">
-                          <span className="inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-xs font-semibold tracking-wide text-navy uppercase">
-                            {row.stage.replace(/_/g, " ")}
-                          </span>
+                          <Pill tone="gold">{row.stage.replace(/_/g, " ")}</Pill>
                         </Detail>
                         <Detail label={f.parentName}>{row.parentName}</Detail>
                         <Detail label={f.email}>
@@ -176,7 +175,7 @@ export function ApplicationsTable({ rows }: { rows: ApplicationView[] }) {
                           <span className="whitespace-pre-line">{row.message || "—"}</span>
                         </Detail>
                         {!row.confirmationSent && (
-                          <p className="sm:col-span-2 flex items-start gap-2 border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive">
+                          <p className="sm:col-span-2 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive">
                             <MailX className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                             No confirmation email was recorded for this application — they may not
                             know it arrived.
@@ -206,10 +205,10 @@ function Detail({
 }) {
   return (
     <div className={className}>
-      <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <dt className="text-[0.6875rem] font-extrabold tracking-[0.12em] text-subtle uppercase">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm leading-relaxed text-navy/90 text-pretty">{children}</dd>
+      <dd className="mt-0.5 text-sm leading-relaxed text-ink-soft text-pretty">{children}</dd>
     </div>
   );
 }

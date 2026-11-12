@@ -1,114 +1,55 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+import { cache } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 
 /**
  * The only thing in the codebase that knows how /berfday is guarded.
  *
- * Pages and actions ask `requireDashboard()` / `isDashboardAuthenticated()` and
- * nothing else. Replacing the shared access code with real per-user accounts
- * (Clerk) means reimplementing these four functions and touching no page, no
- * component, and no action — which is the point, because a shared six-digit
- * code is a stopgap, not an auth system.
+ * Signing in to Clerk proves who someone is; it does not make them staff. Sign-up
+ * is restricted in the Clerk instance, but a stray account (an accepted invite,
+ * a dashboard slip) must still see nothing, so access is decided by the `users`
+ * table: a row keyed by the Clerk user ID with role `admin`.
  */
 
-const COOKIE_NAME = "berfday_session";
-
-/** Long enough for an afternoon of triage, short enough that a stale laptop expires. */
-const SESSION_SECONDS = 60 * 60 * 12;
-
-export type DashboardConfigError = "missing-code" | "missing-secret" | null;
+export type DashboardAccess =
+  | { status: "signed-out" }
+  | { status: "forbidden" }
+  | { status: "admin"; userId: string };
 
 /**
- * Both env vars are required and there is deliberately no fallback. A default
- * code would mean a misconfigured deploy serves every applicant's name, email
- * and phone number to anyone who guesses the URL — so missing config fails
- * closed and says so.
+ * Reading the Clerk session opts the calling page into dynamic rendering, which
+ * keeps a gated page from being prerendered and cached as its signed-in version.
+ *
+ * Cached per request, since the admin layout and the page both ask.
+ *
+ * Throws when DATABASE_URL is unset: without the users table there is no way to
+ * tell an admin from anyone else, so it fails closed as the error page.
  */
-export function getDashboardConfigError(): DashboardConfigError {
-  if (!process.env.DASHBOARD_ACCESS_CODE) return "missing-code";
-  if (!process.env.DASHBOARD_SESSION_SECRET) return "missing-secret";
-  return null;
-}
+export const getDashboardAccess = cache(async (): Promise<DashboardAccess> => {
+  const { userId } = await auth();
+  if (!userId) return { status: "signed-out" };
+
+  const db = getDb();
+  if (!db) throw new Error("DATABASE_URL is not set; /berfday cannot check roles.");
+
+  const [row] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.clerkUserId, userId))
+    .limit(1);
+
+  return row?.role === "admin" ? { status: "admin", userId } : { status: "forbidden" };
+});
 
 /**
- * Signing key for session cookies, derived from the secret *and* the access
- * code. Mixing the code in means changing the code invalidates every existing
- * session, so rotating it actually locks people out instead of only affecting
- * the next sign-in.
+ * For Server Actions and Route Handlers, which are reachable by direct POST and
+ * so must check for themselves rather than trust that the page was gated.
+ * Returns the admin's Clerk user ID.
  */
-function signingKey(): Buffer {
-  return createHmac("sha256", process.env.DASHBOARD_SESSION_SECRET!)
-    .update(`berfday:${process.env.DASHBOARD_ACCESS_CODE!}`)
-    .digest();
-}
-
-function sign(payload: string): string {
-  return createHmac("sha256", signingKey()).update(payload).digest("base64url");
-}
-
-/**
- * Compares HMACs of the two values rather than the values themselves.
- * timingSafeEqual throws outright on a length mismatch, which would both crash
- * on a wrong-length guess and leak the code's length; hashing first makes both
- * sides a fixed 32 bytes.
- */
-function equals(a: string, b: string): boolean {
-  const key = signingKey();
-  return timingSafeEqual(
-    createHmac("sha256", key).update(a).digest(),
-    createHmac("sha256", key).update(b).digest()
-  );
-}
-
-export function verifyAccessCode(input: string): boolean {
-  if (getDashboardConfigError()) return false;
-  return equals(input.trim(), process.env.DASHBOARD_ACCESS_CODE!);
-}
-
-/**
- * Issues the session cookie. Server Actions and Route Handlers only — HTTP
- * cannot set a cookie once the response has started streaming, so calling this
- * during a page render is an error by construction.
- */
-export async function startDashboardSession(): Promise<void> {
-  const expiresAt = Date.now() + SESSION_SECONDS * 1000;
-  // The nonce makes two sessions issued in the same millisecond distinct, so one
-  // cookie is never a valid stand-in for another.
-  const payload = `${expiresAt}.${randomBytes(16).toString("base64url")}`;
-
-  (await cookies()).set(COOKIE_NAME, `${payload}.${sign(payload)}`, {
-    httpOnly: true,
-    sameSite: "lax",
-    // Off on localhost, where there is no HTTPS to send it over.
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_SECONDS,
-  });
-}
-
-export async function endDashboardSession(): Promise<void> {
-  (await cookies()).delete(COOKIE_NAME);
-}
-
-/**
- * Reading this opts the calling page into dynamic rendering, which is what keeps
- * a gated page from being prerendered and cached as its signed-in version.
- */
-export async function isDashboardAuthenticated(): Promise<boolean> {
-  if (getDashboardConfigError()) return false;
-
-  const raw = (await cookies()).get(COOKIE_NAME)?.value;
-  if (!raw) return false;
-
-  // Split from the right: the nonce is base64url and never contains a dot, but
-  // bounding the parse means a malformed cookie can only ever fail, not confuse.
-  const lastDot = raw.lastIndexOf(".");
-  if (lastDot < 1) return false;
-
-  const payload = raw.slice(0, lastDot);
-  const signature = raw.slice(lastDot + 1);
-  if (!equals(signature, sign(payload))) return false;
-
-  const expiresAt = Number(payload.slice(0, payload.indexOf(".")));
-  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+export async function requireDashboard(): Promise<string> {
+  const access = await getDashboardAccess();
+  if (access.status !== "admin") throw new Error("Not authorized for /berfday.");
+  return access.userId;
 }
