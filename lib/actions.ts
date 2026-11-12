@@ -1,4 +1,5 @@
 import { refresh } from "next/cache";
+import { AssignmentError } from "@/lib/db/assignments";
 import { FocusError } from "@/lib/db/focus";
 import { GoalEditError } from "@/lib/db/goals";
 import { ClosedWeekError } from "@/lib/week";
@@ -34,7 +35,8 @@ export async function runAction(fn: () => Promise<void>): Promise<ActionResult> 
       error instanceof InputError ||
       error instanceof ClosedWeekError ||
       error instanceof GoalEditError ||
-      error instanceof FocusError
+      error instanceof FocusError ||
+      error instanceof AssignmentError
     ) {
       return { error: error.message };
     }

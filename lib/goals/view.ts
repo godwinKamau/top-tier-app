@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { assignmentCountsByStudent } from "@/lib/db/assignments";
 import { focusMinutesByStudent } from "@/lib/db/focus";
 import { listGoals, listGoalsForStudents, lockGoals, type WeeklyGoal } from "@/lib/db/goals";
 import { submittedStudents } from "@/lib/db/studyLogs";
@@ -28,6 +29,7 @@ export type GoalView = {
   title: string;
   detail: string | null;
   targetMinutes: number | null;
+  targetCount: number | null;
   progress: Progress;
   /** 0–100, for the bar. */
   percent: number;
@@ -51,7 +53,9 @@ export type WeekView = {
   counted: number;
 };
 
+/** Goals locked before `final_target` existed fall back to the stored target. */
 function targetFor(goal: WeeklyGoal): number {
+  if (goal.finalTarget !== null) return goal.finalTarget;
   return goal.type === "focus_minutes" ? (goal.targetMinutes ?? 0) : 1;
 }
 
@@ -65,6 +69,7 @@ function toView(goal: WeeklyGoal, progress: Progress, earned: EarnedStatus): Goa
     title: goal.title,
     detail: goal.detail,
     targetMinutes: goal.targetMinutes,
+    targetCount: goal.targetCount,
     progress,
     percent:
       status === "done" ? 100 : progress.target > 0 ? Math.min(100, Math.round((progress.value / progress.target) * 100)) : 0,
@@ -100,14 +105,18 @@ function summarize(
 }
 
 export async function getWeekView(studentId: string, weekStart: WeekStart): Promise<WeekView> {
-  const [goals, minutes, submitted] = await Promise.all([
+  const [goals, minutes, submitted, planner] = await Promise.all([
     listGoals(studentId, weekStart),
     focusMinutesByStudent([studentId], weekStart),
     submittedStudents([studentId], weekStart),
+    assignmentCountsByStudent([studentId], weekStart),
   ]);
+  const counts = planner.get(studentId);
   const activity: WeekActivity = {
     focusMinutes: minutes.get(studentId) ?? 0,
     studyLogSubmitted: submitted.has(studentId),
+    assignmentsTotal: counts?.total ?? 0,
+    assignmentsDone: counts?.done ?? 0,
   };
 
   if (isWeekOpen(weekStart)) {
@@ -127,7 +136,7 @@ export async function getWeekView(studentId: string, weekStart: WeekStart): Prom
   await lockGoals(
     unlocked.map((g) => {
       const { progress, earned } = fresh.get(g.id)!;
-      return { id: g.id, finalProgress: progress.value, finalStatus: earned };
+      return { id: g.id, finalProgress: progress.value, finalTarget: progress.target, finalStatus: earned };
     })
   );
 
@@ -153,21 +162,25 @@ export type RosterRow = {
 };
 
 /**
- * The admin roster for one open week, in three queries however many students
+ * The admin roster for one open week, in four queries however many students
  * there are. Students with unfinished goals sort first, then by name.
  */
 export async function getRoster(students: Student[], weekStart: WeekStart): Promise<RosterRow[]> {
   const ids = students.map((s) => s.id);
-  const [goals, minutes, submitted] = await Promise.all([
+  const [goals, minutes, submitted, planner] = await Promise.all([
     listGoalsForStudents(ids, weekStart),
     focusMinutesByStudent(ids, weekStart),
     submittedStudents(ids, weekStart),
+    assignmentCountsByStudent(ids, weekStart),
   ]);
 
   const rows = students.map((student) => {
+    const counts = planner.get(student.id);
     const activity: WeekActivity = {
       focusMinutes: minutes.get(student.id) ?? 0,
       studyLogSubmitted: submitted.has(student.id),
+      assignmentsTotal: counts?.total ?? 0,
+      assignmentsDone: counts?.done ?? 0,
     };
     const own = goals.filter((g) => g.studentId === student.id);
     const views = own

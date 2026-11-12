@@ -1,10 +1,14 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { requireStudent } from "@/lib/auth/student";
 import { invalid, oneOf, runAction, text, type ActionResult } from "@/lib/actions";
+import { createAssignment, deleteAssignment, setAssignmentDone, updateAssignment } from "@/lib/db/assignments";
 import { startSession, stopSession } from "@/lib/db/focus";
 import { setManualDone } from "@/lib/db/goals";
 import { saveStudyLog } from "@/lib/db/studyLogs";
+import { safeReturnPath } from "@/lib/planner/calendar";
+import { assignmentId, parseAssignmentInput } from "@/lib/planner/input";
 import { currentWeek } from "@/lib/week";
 
 /**
@@ -52,5 +56,40 @@ export async function saveStudyLogAction(_prev: ActionResult, formData: FormData
       invalid("Answer all four questions before submitting. \"None\" is fine for blockers.");
     }
     await saveStudyLog(student.id, currentWeek(), fields, intent === "submit");
+  });
+}
+
+/**
+ * Creates an assignment, or updates it when the form carries an `id`. Scoped to
+ * entries the student wrote: work a consultant assigned can only be checked off.
+ */
+export async function saveAssignmentAction(_prev: ActionResult, formData: FormData) {
+  const returnTo = safeReturnPath(formData.get("returnTo"));
+  const result = await runAction(async () => {
+    const student = await requireStudent();
+    const input = parseAssignmentInput(formData);
+    if (formData.get("id")) await updateAssignment(assignmentId(formData), student.id, "student", input);
+    else await createAssignment(student.id, input, "student");
+  });
+  // redirect() throws, so it runs outside runAction's try block.
+  if (!result.error) redirect(returnTo);
+  return result;
+}
+
+export async function deleteAssignmentAction(_prev: ActionResult, formData: FormData) {
+  const returnTo = safeReturnPath(formData.get("returnTo"));
+  const result = await runAction(async () => {
+    const student = await requireStudent();
+    await deleteAssignment(assignmentId(formData), student.id, "student");
+  });
+  if (!result.error) redirect(returnTo);
+  return result;
+}
+
+export async function setAssignmentDoneAction(_prev: ActionResult, formData: FormData) {
+  return runAction(async () => {
+    const student = await requireStudent();
+    const done = oneOf(formData, "done", ["true", "false"] as const) === "true";
+    await setAssignmentDone(assignmentId(formData), student.id, done);
   });
 }

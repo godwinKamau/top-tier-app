@@ -13,6 +13,18 @@ drizzle has ever replayed.
   for a primary academic challenge and `applicants` had nowhere to put it, so
   the answer was shown in the confirmation email and then discarded.
 
+- `0002_add_assignments.sql` — the student planner/calendar table and its two
+  enums. Applied directly (in a transaction) rather than with `push`, because
+  `drizzle-kit push` misreads the existing `study_logs_student_week_unique`
+  constraint as missing and offers to truncate `study_logs` to add it. Never
+  accept that prompt: the constraint is already there.
+
+- `0003_add_assignment_goals.sql` — the "Complete N assignments" goal type:
+  an enum value, `target_count`, `final_target` and a check. Apply it directly,
+  for the same reason as 0002, in two steps: the `ALTER TYPE` alone first, then
+  the rest in a transaction (a new enum value can't be used by the check in the
+  transaction that adds it).
+
 ## Applying 0001
 
 Either run the file directly against the database, or let drizzle diff it:

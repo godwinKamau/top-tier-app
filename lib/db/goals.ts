@@ -53,6 +53,7 @@ export type GoalInput = {
   category: SoarCategory;
   type: GoalType;
   targetMinutes: number | null;
+  targetCount: number | null;
   title: string;
   detail: string | null;
 };
@@ -84,6 +85,7 @@ export async function updateGoal(
     .set({
       ...input,
       targetMinutes: goal.type === "focus_minutes" ? input.targetMinutes : null,
+      targetCount: goal.type === "assignments" ? input.targetCount : null,
       updatedAt: new Date(),
     })
     .where(eq(weeklyGoals.id, goalId));
@@ -141,8 +143,8 @@ export async function copyWeekGoals(
 ): Promise<number> {
   assertEditable(toWeek);
   const result = await db().execute(sql`
-    INSERT INTO weekly_goals (student_id, week_start, category, type, target_minutes, title, detail, created_by)
-    SELECT student_id, ${toWeek}::date, category, type, target_minutes, title, detail, ${createdBy}
+    INSERT INTO weekly_goals (student_id, week_start, category, type, target_minutes, target_count, title, detail, created_by)
+    SELECT student_id, ${toWeek}::date, category, type, target_minutes, target_count, title, detail, ${createdBy}
     FROM weekly_goals
     WHERE student_id = ${studentId} AND week_start = ${fromWeek}::date
       AND NOT EXISTS (
@@ -160,14 +162,14 @@ export async function copyWeekGoals(
  * same values and neither overwrites a lock taken earlier.
  */
 export async function lockGoals(
-  results: { id: string; finalProgress: number; finalStatus: EarnedStatus }[]
+  results: { id: string; finalProgress: number; finalTarget: number; finalStatus: EarnedStatus }[]
 ): Promise<void> {
   if (results.length === 0) return;
   const lockedAt = new Date();
   const [first, ...rest] = results.map((r) =>
     db()
       .update(weeklyGoals)
-      .set({ finalProgress: r.finalProgress, finalStatus: r.finalStatus, lockedAt })
+      .set({ finalProgress: r.finalProgress, finalTarget: r.finalTarget, finalStatus: r.finalStatus, lockedAt })
       .where(and(eq(weeklyGoals.id, r.id), isNull(weeklyGoals.lockedAt)))
   );
   await db().batch([first, ...rest]);

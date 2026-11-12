@@ -12,7 +12,7 @@ import { ActionForm } from "./ActionForm";
 
 /**
  * Adding or editing one goal. The title is optional: left blank it is generated
- * from the type and target ("Log 4 hrs of focus time"), shown as the
+ * from the type and target ("Log 4 hrs of focus time", "Complete 3 assignments"), shown as the
  * placeholder so the admin sees what the student will read before saving.
  */
 export function GoalForm({
@@ -32,8 +32,10 @@ export function GoalForm({
   const [hours, setHours] = useState(
     goal?.targetMinutes ? String(goal.targetMinutes / 60) : "4"
   );
+  const [count, setCount] = useState(goal?.targetCount ? String(goal.targetCount) : "3");
   const def = GOAL_TYPES[type];
-  const previewMinutes = Math.round(Number(hours) * 60) || 0;
+  const previewTarget =
+    def.target === "count" ? Math.round(Number(count)) || 0 : Math.round(Number(hours) * 60) || 0;
 
   return (
     <ActionForm
@@ -82,7 +84,7 @@ export function GoalForm({
         )}
       </div>
 
-      {def.hasTarget && (
+      {def.target === "minutes" && (
         <div className="grid gap-1.5">
           <Label htmlFor={`${id}-hours`}>Target (hours this week)</Label>
           <Input
@@ -100,7 +102,25 @@ export function GoalForm({
         </div>
       )}
 
-      <div className={def.hasTarget ? "grid gap-1.5" : "grid gap-1.5 sm:col-span-2"}>
+      {def.target === "count" && (
+        <div className="grid gap-1.5">
+          <Label htmlFor={`${id}-count`}>Target (assignments this week)</Label>
+          <Input
+            id={`${id}-count`}
+            name="targetCount"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={50}
+            step={1}
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            required
+          />
+        </div>
+      )}
+
+      <div className={def.target ? "grid gap-1.5" : "grid gap-1.5 sm:col-span-2"}>
         <Label htmlFor={`${id}-title`}>
           Title{type === "manual" ? "" : " (optional)"}
         </Label>
@@ -108,7 +128,7 @@ export function GoalForm({
           id={`${id}-title`}
           name="title"
           defaultValue={goal?.title}
-          placeholder={def.defaultTitle(previewMinutes) || "e.g. Ask one question on the lab report"}
+          placeholder={def.defaultTitle(previewTarget) || "e.g. Ask one question on the lab report"}
           required={type === "manual"}
         />
       </div>

@@ -9,22 +9,30 @@ import { AdminGoalControls } from "@/components/goals/AdminGoalControls";
 import { GoalForm } from "@/components/goals/GoalForm";
 import { StudyLogAnswers } from "@/components/goals/StudyLogAnswers";
 import { WeeklyGoals, WeekSummary } from "@/components/goals/WeeklyGoals";
+import { CalendarShell } from "@/components/planner/CalendarShell";
+import { MonthCalendar } from "@/components/planner/MonthCalendar";
+import { WeekPlanner } from "@/components/planner/WeekPlanner";
 import { Pill } from "@/components/portal/Pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getDashboardAccess } from "@/lib/auth/dashboard";
+import { listAssignments, type Assignment } from "@/lib/db/assignments";
 import { listSessions, MAX_SESSION_MINUTES, type FocusSession } from "@/lib/db/focus";
 import { getStudent } from "@/lib/db/students";
 import { listStudyLogs } from "@/lib/db/studyLogs";
 import { formatMinutes } from "@/lib/goals/catalog";
 import { getWeekView } from "@/lib/goals/view";
+import { calendarFrame, calendarLinks, resolveCalendar, type CalendarState } from "@/lib/planner/calendar";
+import { UUID } from "@/lib/planner/input";
 import { cn } from "@/lib/utils";
 import {
+  currentMonth,
   currentWeek,
   parseWeekStart,
   PROGRAM_ZONE,
   shiftWeek,
+  todayInProgram,
   toProgramDateTimeInput,
 } from "@/lib/week";
 import {
@@ -48,12 +56,11 @@ const sessionFormat = new Intl.DateTimeFormat("en-US", {
   timeZone: PROGRAM_ZONE,
 });
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 const TABS = [
   { key: "goals", label: "Weekly goals" },
   { key: "focus", label: "Focus sessions" },
   { key: "logs", label: "Study logs" },
+  { key: "calendar", label: "Calendar" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -62,7 +69,7 @@ export default async function StudentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ week?: string; tab?: string }>;
+  searchParams: Promise<{ week?: string; tab?: string; view?: string; month?: string }>;
 }) {
   const access = await getDashboardAccess();
   if (access.status === "signed-out") {
@@ -83,25 +90,35 @@ export default async function StudentPage({
   const thisWeek = currentWeek();
   const nextWeek = shiftWeek(thisWeek, 1);
   const requested = parseWeekStart(query.week);
-  // Weeks after next have nothing to show or edit, so they fall back to now.
-  const week = requested && requested <= nextWeek ? requested : thisWeek;
+  // Weeks after next have no goals to show or edit, so they fall back to now. The
+  // calendar is read-only and shows whatever the student planned, so it doesn't.
+  const week = requested && (tab === "calendar" || requested <= nextWeek) ? requested : thisWeek;
+  const calendar = resolveCalendar({ view: query.view, month: query.month, week });
+  const frame = calendarFrame(calendar);
 
-  const [view, sessions, logs] = await Promise.all([
+  const [view, sessions, logs, assignments] = await Promise.all([
     getWeekView(student.id, week),
     tab === "focus" ? listSessions(student.id, week) : Promise.resolve([]),
     tab === "logs" ? listStudyLogs(student.id) : Promise.resolve([]),
+    tab === "calendar" ? listAssignments(student.id, frame.from, frame.to) : Promise.resolve([]),
   ]);
   const focusTarget = view.goals
     .filter((g) => g.type === "focus_minutes")
     .reduce((sum, g) => sum + (g.targetMinutes ?? 0), 0);
   const openGoals = view.goals.filter((g) => g.status === "open").length;
 
-  const href = (next: { week?: string; tab?: Tab }) => {
+  const href = (next: { week?: string; tab?: Tab; view?: string; month?: string }) => {
     const p = new URLSearchParams();
     const w = next.week ?? week;
     const t = next.tab ?? tab;
     if (w !== thisWeek) p.set("week", w);
     if (t !== "goals") p.set("tab", t);
+    if (t === "calendar") {
+      const v = next.view ?? calendar.view;
+      const m = next.month ?? calendar.month;
+      if (v === "week") p.set("view", "week");
+      else if (m !== currentMonth()) p.set("month", m);
+    }
     const qs = p.toString();
     return `/berfday/students/${student.id}${qs ? `?${qs}` : ""}`;
   };
@@ -135,7 +152,7 @@ export default async function StudentPage({
           <p className="mt-1 text-[0.8125rem] font-medium text-subtle">{meta.join(" · ")}</p>
         </div>
 
-        {tab !== "logs" && (
+        {tab !== "logs" && tab !== "calendar" && (
           <nav
             aria-label="Week"
             className="flex items-center gap-1 rounded-lg bg-[#efe9dc] p-1 text-ink"
@@ -262,6 +279,17 @@ export default async function StudentPage({
         <FocusSessions studentId={student.id} sessions={sessions} open={view.open} week={week} total={view.focusMinutes} />
       )}
 
+      {tab === "calendar" && (
+        <AdminCalendar
+          studentId={student.id}
+          firstName={student.name.split(" ")[0]}
+          state={calendar}
+          frame={frame}
+          assignments={assignments}
+          href={(next) => href({ tab: "calendar", ...next })}
+        />
+      )}
+
       {tab === "logs" && (
         <section aria-label="Study logs" className="grid max-w-[720px] gap-3">
           {logs.length === 0 ? (
@@ -374,5 +402,61 @@ function FocusSessions({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * The student's calendar as they see it. Staff add work here and edit what staff
+ * assigned; what the student wrote stays read-only, its notes on hover or focus.
+ */
+function AdminCalendar({
+  studentId,
+  firstName,
+  state,
+  frame,
+  assignments,
+  href,
+}: {
+  studentId: string;
+  firstName: string;
+  state: CalendarState;
+  frame: ReturnType<typeof calendarFrame>;
+  assignments: Assignment[];
+  href: (next: CalendarState) => string;
+}) {
+  const links = calendarLinks(state, href);
+  const today = todayInProgram();
+  const back = encodeURIComponent(href(state));
+  const base = `/berfday/students/${studentId}/assignments`;
+  const editHref = (a: Assignment) => (a.author === "admin" ? `${base}/${a.id}?return=${back}` : undefined);
+  return (
+    <CalendarShell
+      title={frame.title}
+      subtitle={`Add work for ${firstName}. Entries they wrote are read-only; hover or focus one to see its notes.`}
+      view={state.view}
+      heading="h2"
+      {...links}
+      addHref={`${base}/new?return=${back}`}
+    >
+      {state.view === "month" ? (
+        <MonthCalendar
+          days={frame.monthDays}
+          assignments={assignments}
+          today={today}
+          weekHref={links.weekOf}
+          newHref={(date) => `${base}/new?date=${date}&return=${back}`}
+          editHref={editHref}
+        />
+      ) : (
+        <WeekPlanner
+          days={frame.weekDays}
+          assignments={assignments}
+          mode="admin"
+          today={today}
+          editHref={editHref}
+          showOverdue
+        />
+      )}
+    </CalendarShell>
   );
 }

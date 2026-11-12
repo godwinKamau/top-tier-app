@@ -174,7 +174,7 @@ export const emailTriggers = pgTable("email_triggers", {
 /** Small Wins, Organization, Accountability, Rigor. Labels live in lib/goals/catalog.ts. */
 export const soarCategory = pgEnum("soar_category", ['small_wins', 'organization', 'accountability', 'rigor'])
 /** How progress is measured. Each value has a calculator in lib/goals/catalog.ts. */
-export const goalType = pgEnum("goal_type", ['focus_minutes', 'study_log', 'manual'])
+export const goalType = pgEnum("goal_type", ['focus_minutes', 'study_log', 'manual', 'assignments'])
 export const goalOverride = pgEnum("goal_override", ['complete', 'excused'])
 export const focusSource = pgEnum("focus_source", ['timer', 'admin'])
 
@@ -211,7 +211,7 @@ export const students = pgTable("students", {
  * the week is open: it is computed from the activity tables on read, so a
  * corrected focus session or an edited log fixes the goal without a sync step.
  *
- * `final_progress` / `final_status` / `locked_at` are written once, on the first
+ * `final_progress` / `final_status` / `final_target` / `locked_at` are written once, on the first
  * read after the week closes (see lib/goals/view.ts), and are the record from
  * then on. `final_status` is what the activity earned ('open' | 'done'); the
  * override is still applied on top, so it stays correctable.
@@ -224,6 +224,8 @@ export const weeklyGoals = pgTable("weekly_goals", {
 	category: soarCategory().notNull(),
 	type: goalType().notNull(),
 	targetMinutes: integer("target_minutes"),
+	/** How many planner entries an `assignments` goal asks for; capped at the week's total when measured. */
+	targetCount: integer("target_count"),
 	title: text().notNull(),
 	detail: text(),
 	/** The student's own check on a `manual` goal. */
@@ -232,6 +234,8 @@ export const weeklyGoals = pgTable("weekly_goals", {
 	overrideBy: text("override_by"),
 	finalProgress: integer("final_progress"),
 	finalStatus: text("final_status"),
+	/** The target the goal closed with: an `assignments` target moves with the week's entries. */
+	finalTarget: integer("final_target"),
 	lockedAt: timestamp("locked_at", { withTimezone: true }),
 	createdBy: text("created_by").notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -254,6 +258,7 @@ export const weeklyGoals = pgTable("weekly_goals", {
 			name: "weekly_goals_created_by_users_clerk_user_id_fk"
 		}),
 	check("weekly_goals_focus_target_check", sql`${table.type} <> 'focus_minutes' OR ${table.targetMinutes} > 0`),
+	check("weekly_goals_assignments_target_check", sql`${table.type} <> 'assignments' OR ${table.targetCount} > 0`),
 ]);
 
 /**
@@ -298,5 +303,38 @@ export const studyLogs = pgTable("study_logs", {
 			columns: [table.studentId],
 			foreignColumns: [students.id],
 			name: "study_logs_student_id_students_id_fk"
+		}).onDelete("cascade"),
+]);
+
+/** A plan is when the student means to work on something; due is when it's due. */
+export const assignmentKind = pgEnum("assignment_kind", ['plan', 'due'])
+/** Who wrote the entry: the student, or a consultant ('admin'), whose entries the student can only check off. */
+export const assignmentAuthor = pgEnum("assignment_author", ['student', 'admin'])
+
+/**
+ * One entry on a student's planner and calendar. A plan and a due date for the
+ * same piece of work are two rows, not linked: each is written on its own,
+ * by the student or by a consultant.
+ * `date` is a Chicago calendar day, so it is stored as a bare date string and
+ * never converted through an instant.
+ */
+export const assignments = pgTable("assignments", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	studentId: uuid("student_id").notNull(),
+	title: text().notNull(),
+	className: text("class_name").notNull(),
+	date: date("date", { mode: "string" }).notNull(),
+	kind: assignmentKind().notNull(),
+	notes: text(),
+	completedAt: timestamp("completed_at", { withTimezone: true }),
+	author: assignmentAuthor().default('student').notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+	index("assignments_student_date_idx").on(table.studentId, table.date),
+	foreignKey({
+			columns: [table.studentId],
+			foreignColumns: [students.id],
+			name: "assignments_student_id_students_id_fk"
 		}).onDelete("cascade"),
 ]);

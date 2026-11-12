@@ -1,5 +1,5 @@
 import { TZDate } from "@date-fns/tz";
-import { addWeeks, format, isMonday, startOfWeek } from "date-fns";
+import { addDays, addMonths, addWeeks, endOfMonth, endOfWeek, format, isMonday, startOfWeek } from "date-fns";
 
 /**
  * Everything about "which week is it" for the student portal. The program runs
@@ -106,4 +106,80 @@ export function parseProgramDateTime(value: string): Date | null {
 /** The inverse, for prefilling a datetime-local input. */
 export function toProgramDateTimeInput(instant: Date): string {
   return format(new TZDate(instant, PROGRAM_ZONE), "yyyy-MM-dd'T'HH:mm");
+}
+
+// ─── Calendar days and months ────────────────────────────────────────────────
+// Planner entries are dated by Chicago calendar day (`YYYY-MM-DD`), the shape
+// the `assignments.date` column stores, and months by `YYYY-MM`.
+
+export type ProgramDate = string;
+export type MonthKey = string;
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_PATTERN = /^\d{4}-\d{2}$/;
+
+function dayOf(date: ProgramDate): TZDate {
+  const [y, m, d] = date.split("-").map(Number);
+  return new TZDate(y, m - 1, d, PROGRAM_ZONE);
+}
+
+/** Today's date in Chicago, whatever zone the server is in. */
+export function todayInProgram(now: Date = new Date()): ProgramDate {
+  return format(new TZDate(now, PROGRAM_ZONE), "yyyy-MM-dd");
+}
+
+/** For untrusted input. Rejects rollovers such as 2026-02-30. */
+export function parseProgramDate(value: unknown): ProgramDate | null {
+  if (typeof value !== "string" || !DATE_PATTERN.test(value)) return null;
+  const day = dayOf(value);
+  if (Number.isNaN(day.getTime())) return null;
+  return format(day, "yyyy-MM-dd") === value ? value : null;
+}
+
+/** Monday through Sunday of a week. */
+export function weekDays(weekStart: WeekStart): ProgramDate[] {
+  const monday = mondayOf(weekStart);
+  return Array.from({ length: 7 }, (_, i) => format(addDays(monday, i), "yyyy-MM-dd"));
+}
+
+/** The week a calendar day belongs to. */
+export function weekStartOfDate(date: ProgramDate): WeekStart {
+  return format(startOfWeek(dayOf(date), { weekStartsOn: 1 }), "yyyy-MM-dd");
+}
+
+export function currentMonth(now: Date = new Date()): MonthKey {
+  return todayInProgram(now).slice(0, 7);
+}
+
+export function parseMonth(value: unknown): MonthKey | null {
+  if (typeof value !== "string" || !MONTH_PATTERN.test(value)) return null;
+  const month = Number(value.slice(5));
+  return month >= 1 && month <= 12 ? value : null;
+}
+
+export function shiftMonth(month: MonthKey, months: number): MonthKey {
+  return format(addMonths(dayOf(`${month}-01`), months), "yyyy-MM");
+}
+
+/** Whole Mon–Sun weeks covering the month, as a flat list of days. */
+export function monthGridDays(month: MonthKey): { date: ProgramDate; inMonth: boolean }[] {
+  const first = dayOf(`${month}-01`);
+  const start = startOfWeek(first, { weekStartsOn: 1 });
+  const end = endOfWeek(endOfMonth(first), { weekStartsOn: 1 });
+  const days: { date: ProgramDate; inMonth: boolean }[] = [];
+  for (let d = start; d <= end; d = addDays(d, 1)) {
+    const date = format(d, "yyyy-MM-dd");
+    days.push({ date, inMonth: date.startsWith(month) });
+  }
+  return days;
+}
+
+/** "October 2026" */
+export function formatMonthLabel(month: MonthKey): string {
+  return format(dayOf(`${month}-01`), "MMMM yyyy");
+}
+
+/** "Mon Oct 19", or another date-fns pattern. */
+export function formatDayLabel(date: ProgramDate, pattern = "EEE MMM d"): string {
+  return format(dayOf(date), pattern);
 }

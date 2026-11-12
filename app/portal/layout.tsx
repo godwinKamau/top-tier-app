@@ -25,6 +25,7 @@ export default async function PortalLayout({ children }: { children: React.React
           userRole={access.student.grade ? `Student · ${access.student.grade}` : "Student"}
           tabs={[
             { href: "/portal", label: "This week", exact: true },
+            { href: "/portal/calendar", label: "Calendar", match: ["/portal/assignments"] },
             { href: "/portal/focus", label: "Focus" },
             { href: "/portal/log", label: "Study log" },
           ]}

@@ -4,9 +4,8 @@
  * Category and type answer different questions and are chosen independently by
  * the admin: the category is *why* the goal matters to the student (a focus goal
  * can be Rigor one week and Small Wins the next), the type is *how* progress is
- * measured. Adding a goal type later — calendar updates, assignment turn-in —
- * means adding an enum value and an entry here with its calculator, and nothing
- * else in the goals UI changes.
+ * measured. Adding a goal type later means adding an enum value and an entry
+ * here with its calculator, and nothing else in the goals UI changes.
  */
 
 export const SOAR_CATEGORIES = [
@@ -23,17 +22,21 @@ export const SOAR_BY_KEY = Object.fromEntries(SOAR_CATEGORIES.map((c) => [c.key,
   (typeof SOAR_CATEGORIES)[number]
 >;
 
-export type GoalType = "focus_minutes" | "study_log" | "manual";
+export type GoalType = "focus_minutes" | "study_log" | "manual" | "assignments";
 
 /** What a week's activity looks like to a progress calculator. */
 export type WeekActivity = {
   focusMinutes: number;
   studyLogSubmitted: boolean;
+  /** Planner entries dated in the week, and how many were checked off before it ended. */
+  assignmentsTotal: number;
+  assignmentsDone: number;
 };
 
 export type GoalForProgress = {
   type: GoalType;
   targetMinutes: number | null;
+  targetCount: number | null;
   manuallyCompletedAt: Date | null;
 };
 
@@ -41,9 +44,10 @@ export type Progress = { value: number; target: number };
 
 type GoalTypeDef = {
   label: string;
-  /** Whether the admin sets a numeric target. */
-  hasTarget: boolean;
-  defaultTitle: (targetMinutes: number | null) => string;
+  /** The numeric target the admin sets, if any: focus minutes or a count of assignments. */
+  target: "minutes" | "count" | null;
+  /** Gets the target in the unit `target` names. */
+  defaultTitle: (target: number | null) => string;
   progress: (goal: GoalForProgress, activity: WeekActivity) => Progress;
   /** "X of Y" as the student and admin read it. */
   describe: (p: Progress) => string;
@@ -52,7 +56,7 @@ type GoalTypeDef = {
 export const GOAL_TYPES: Record<GoalType, GoalTypeDef> = {
   focus_minutes: {
     label: "Focus time",
-    hasTarget: true,
+    target: "minutes",
     defaultTitle: (target) => `Log ${formatMinutes(target ?? 0)} of focus time`,
     progress: (goal, activity) => ({
       value: activity.focusMinutes,
@@ -62,17 +66,29 @@ export const GOAL_TYPES: Record<GoalType, GoalTypeDef> = {
   },
   study_log: {
     label: "Weekly study log",
-    hasTarget: false,
+    target: null,
     defaultTitle: () => "Fill out your weekly study log",
     progress: (_goal, activity) => ({ value: activity.studyLogSubmitted ? 1 : 0, target: 1 }),
     describe: (p) => (p.value >= p.target ? "Submitted" : "Not submitted"),
   },
   manual: {
     label: "Check-off task",
-    hasTarget: false,
+    target: null,
     defaultTitle: () => "",
     progress: (goal) => ({ value: goal.manuallyCompletedAt ? 1 : 0, target: 1 }),
     describe: (p) => (p.value >= p.target ? "Done" : "Not done"),
+  },
+  assignments: {
+    label: "Assignments completed",
+    target: "count",
+    defaultTitle: (n) => `Complete ${n ?? 0} assignment${n === 1 ? "" : "s"}`,
+    // Capped at the week's entries, so a light week can still be finished.
+    // With none at all the target is 0 and the goal stays open.
+    progress: (goal, activity) => {
+      const target = Math.min(goal.targetCount ?? 0, activity.assignmentsTotal);
+      return { value: Math.min(activity.assignmentsDone, target), target };
+    },
+    describe: (p) => (p.target === 0 ? "No assignments this week" : `${p.value} of ${p.target} done`),
   },
 };
 
